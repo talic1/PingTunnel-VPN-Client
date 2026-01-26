@@ -47,4 +47,9 @@ Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExeName}"
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\{#AppExeName}"; Description: "Launch {#AppName}"; Flags: nowait postinstall skipifsilent shellexec; Verb: "runas"
+Filename: "{app}\{#AppExeName}"; Description: "Launch {#AppName}"; Flags: nowait postinstall skipifsilent shellexec; Verb: "runas"; WorkingDir: "{app}"; StatusMsg: "Launching {#AppName}..."
+
+[UninstallRun]
+Filename: "{cmd}"; Parameters: "/C taskkill /F /T /IM ""{#AppExeName}"" >NUL 2>&1 || exit /b 0"; Flags: runhidden
+Filename: "{cmd}"; Parameters: "/C taskkill /F /T /IM ""pingtunnel.exe"" >NUL 2>&1 || exit /b 0"; Flags: runhidden
+Filename: "{cmd}"; Parameters: "/C taskkill /F /T /IM ""tun2socks.exe"" >NUL 2>&1 || exit /b 0"; Flags: runhidden
