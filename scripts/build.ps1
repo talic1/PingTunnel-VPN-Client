@@ -238,8 +238,7 @@ if (Test-Path $manifestPath) {
 "@
     }
     
-    # Fix manifest XML attributes if needed (version should be 1.0, manifestVersion should be 1.0)
-    $manifestContent = $manifestContent -replace 'version="1\.0\.0"', 'version="1.0"'
+    # Fix manifest XML attributes if needed (manifestVersion casing)
     $manifestContent = $manifestContent -replace 'manifestversion=', 'manifestVersion='
     
     # Update version in assemblyIdentity tag (use 4-part version for assemblyIdentity)
@@ -347,8 +346,8 @@ finally {
 
 Write-Host ""
 
-# Step 5: Publish self-contained executable
-Write-Host "Step 5: Publishing self-contained executable..." -ForegroundColor Yellow
+# Step 5: Publish self-contained output (multi-file, Resources-based)
+Write-Host "Step 5: Publishing self-contained output..." -ForegroundColor Yellow
 
 if (-not (Test-Path $OutputDir)) {
     New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
@@ -362,38 +361,37 @@ try {
         -c $configuration `
         -r win-x64 `
         --self-contained true `
-        -p:PublishSingleFile=true `
-        -p:IncludeNativeLibrariesForSelfExtract=true `
-        -p:EnableCompressionInSingleFile=true `
-        -p:IncludeAllContentForSelfExtract=true `
+        -p:PublishSingleFile=false `
+        -p:IncludeNativeLibrariesForSelfExtract=false `
+        -p:EnableCompressionInSingleFile=false `
+        -p:IncludeAllContentForSelfExtract=false `
         -o $publishDir
     
     if ($LASTEXITCODE -ne 0) {
         throw "Publish failed"
     }
     
-    # Copy the main executable to dist root
+    # Copy publish output to dist root (multi-file)
+    Copy-Item -Path (Join-Path $publishDir "*") -Destination $OutputDir -Recurse -Force
+
     # The executable name matches the AssemblyName from .csproj
     $exeName = "$actualExeName.exe"
-    $exePath = Join-Path $publishDir $exeName
-    
-    # If the expected exe doesn't exist, try to find any .exe in the publish directory
+    $exePath = Join-Path $OutputDir $exeName
+
+    # If the expected exe doesn't exist, try to find any .exe in the output directory
     if (-not (Test-Path $exePath)) {
-        $foundExe = Get-ChildItem -Path $publishDir -Filter "*.exe" | Where-Object { $_.Name -notlike "*tun2socks*" -and $_.Name -notlike "*pingtunnel*" } | Select-Object -First 1
+        $foundExe = Get-ChildItem -Path $OutputDir -Filter "*.exe" -File |
+            Where-Object { $_.Name -notin @("pingtunnel.exe", "tun2socks.exe", "createdump.exe") } |
+            Select-Object -First 1
         if ($foundExe) {
             $exeName = $foundExe.Name
             $exePath = $foundExe.FullName
             Write-Host "  Found executable: $exeName" -ForegroundColor Yellow
         }
     }
-    
+
     if (Test-Path $exePath) {
-        # Copy executable first
-        $finalExePath = Join-Path $OutputDir $exeName
-        Copy-Item -Path $exePath -Destination $finalExePath -Force
-        
         # Try to re-embed manifest using mt.exe if available (Windows SDK tool)
-        # This can help fix side-by-side configuration issues with single-file apps
         $mtPath = "${env:ProgramFiles(x86)}\Windows Kits\10\bin\10.0.22621.0\x64\mt.exe"
         if (-not (Test-Path $mtPath)) {
             # Try to find mt.exe in common locations
@@ -413,7 +411,7 @@ try {
         if (Test-Path $mtPath) {
             try {
                 Write-Host "  Re-embedding manifest using mt.exe..." -ForegroundColor Cyan
-                & $mtPath -manifest $manifestPath -outputresource:"$finalExePath;1" | Out-Null
+                & $mtPath -manifest $manifestPath -outputresource:"$exePath;1" | Out-Null
                 if ($LASTEXITCODE -eq 0) {
                     Write-Host "  Manifest re-embedded successfully" -ForegroundColor Green
                 }
@@ -474,6 +472,10 @@ try {
             Write-Host "  WARNING: Icon file not found: $iconFile" -ForegroundColor Yellow
         }
     }
+
+    if (Test-Path $publishDir) {
+        Remove-Item -Path $publishDir -Recurse -Force
+    }
 }
 finally {
     Pop-Location
@@ -498,7 +500,8 @@ Get-ChildItem $OutputDir -Filter "*.dll" | ForEach-Object {
 
 Write-Host ""
 Write-Host "To run the application:" -ForegroundColor Yellow
-$exeFiles = Get-ChildItem $OutputDir -Filter "*.exe" | Where-Object { $_.Name -notlike "*tun2socks*" -and $_.Name -notlike "*pingtunnel*" }
+$exeFiles = Get-ChildItem $OutputDir -Filter "*.exe" |
+    Where-Object { $_.Name -notin @("pingtunnel.exe", "tun2socks.exe", "createdump.exe") }
 if ($exeFiles) {
     $mainExe = $exeFiles[0].Name
     Write-Host "  1. Run as Administrator: $OutputDir\$mainExe" -ForegroundColor White

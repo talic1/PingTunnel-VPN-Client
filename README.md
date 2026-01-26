@@ -27,8 +27,8 @@ System-wide VPN tunneling over ICMP using pingtunnel + tun2socks + Wintun, wrapp
 Grab the latest release from GitHub:
 
 - **Installer (recommended)**: installs the app, creates uninstaller, optional desktop shortcut
-- **Portable (self-contained)**: single EXE, no install required
-- **Portable (framework-dependent)**: smaller size, requires .NET Desktop Runtime
+- **Portable (self-contained)**: folder with EXE + `Resources` + support files, no install required
+- **Portable (framework-dependent)**: smaller multi-file folder, requires .NET Desktop Runtime
 
 ## Install (Installer)
 
@@ -40,7 +40,8 @@ Grab the latest release from GitHub:
 
 1. Download the portable `.zip`
 2. Extract anywhere
-3. Run the EXE **as Administrator**
+3. Keep all files (including the `Resources` folder) together
+4. Run the EXE **as Administrator**
 
 ## Requirements
 
@@ -63,15 +64,15 @@ cd "PingTunnel-VPN-Client"
 
 Output:
 
-- `dist\` (self-contained single EXE + Resources)
+- `dist\` (self-contained publish output + Resources)
 - `dist-framework\` (framework-dependent publish output)
 
 ## Release Pipeline
 
 This repo includes a GitHub Actions workflow that builds:
 
-- Portable self-contained EXE + ZIP
-- Portable framework-dependent EXE + ZIP
+- Portable self-contained folder + ZIP
+- Portable framework-dependent folder + ZIP
 - Installer EXE (Inno Setup, optional desktop shortcut)
 
 Tag a release like `v1.2.3` to publish.
@@ -87,6 +88,14 @@ Unauthorized use may violate laws or policies.
 - **Binaries missing**: Ensure `Resources` contains `pingtunnel.exe`, `tun2socks.exe`, `wintun.dll`
 - **ICMP blocked**: Your network may block ping; try another network
 - **DNS leaks**: Ensure “Tunnel DNS” mode is selected
+
+## Antivirus / Trust Notes
+
+Some antivirus products may flag tunneling tools like `pingtunnel.exe` and `tun2socks.exe`. To reduce false positives:
+
+- Prefer the **installer** or **portable multi‑file** build (resources kept next to the app, not self‑extracted to temp).
+- Ship a **code‑signed** installer/executable for releases.
+- If you believe a detection is a false positive, submit the binaries to Microsoft Defender for review.
 
 ## License
 

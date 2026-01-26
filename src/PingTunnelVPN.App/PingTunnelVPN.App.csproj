@@ -15,10 +15,10 @@
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <SelfContained>true</SelfContained>
-    <PublishSingleFile>true</PublishSingleFile>
-    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
-    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
-    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+    <PublishSingleFile>false</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>false</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>false</EnableCompressionInSingleFile>
+    <IncludeAllContentForSelfExtract>false</IncludeAllContentForSelfExtract>
   </PropertyGroup>
 
   <ItemGroup>
@@ -34,23 +34,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Resources\pingtunnel.exe" Condition="Exists('Resources\pingtunnel.exe')" />
-    <EmbeddedResource Include="Resources\tun2socks.exe" Condition="Exists('Resources\tun2socks.exe')" />
-    <EmbeddedResource Include="Resources\wintun.dll" Condition="Exists('Resources\wintun.dll')" />
-    <EmbeddedResource Include="Resources\icon.ico" Condition="Exists('Resources\icon.ico')" />
-    <EmbeddedResource Include="Resources\icon-off.ico" Condition="Exists('Resources\icon-off.ico')" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Update="Resources\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <!-- Ensure icon files are included in build -->
-    <None Update="Resources\icon.ico" Condition="Exists('Resources\icon.ico')">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Resources\icon-off.ico" Condition="Exists('Resources\icon-off.ico')">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
     </None>
   </ItemGroup>
 

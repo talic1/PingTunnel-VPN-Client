@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.IO;
 using System.Security.Principal;
 using Serilog;
 
@@ -48,7 +49,7 @@ public static class ElevationHelper
                 FileName = exePath,
                 UseShellExecute = true,
                 Verb = "runas", // Request elevation
-                WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory
+                WorkingDirectory = Path.GetDirectoryName(exePath) ?? AppContext.BaseDirectory
             };
 
             // Pass command line arguments if any

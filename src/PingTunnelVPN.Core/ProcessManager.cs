@@ -27,7 +27,23 @@ public class ProcessManager : IDisposable
     /// <summary>
     /// Gets the directory where the executable is located.
     /// </summary>
-    public static string AppDirectory => AppDomain.CurrentDomain.BaseDirectory;
+    public static string AppDirectory
+    {
+        get
+        {
+            var processPath = Environment.ProcessPath;
+            if (!string.IsNullOrWhiteSpace(processPath))
+            {
+                var directory = Path.GetDirectoryName(processPath);
+                if (!string.IsNullOrWhiteSpace(directory))
+                {
+                    return directory;
+                }
+            }
+
+            return AppContext.BaseDirectory;
+        }
+    }
 
     /// <summary>
     /// Gets the Resources directory (where binaries are stored).
@@ -39,18 +55,8 @@ public class ProcessManager : IDisposable
     /// </summary>
     public static string GetBinaryPath(string binaryName)
     {
-        // First check Resources folder (preferred location)
-        var resourcesPath = Path.Combine(ResourcesDirectory, binaryName);
-        if (File.Exists(resourcesPath))
-            return resourcesPath;
-        
-        // Fallback to app directory (for development/testing)
-        var appPath = Path.Combine(AppDirectory, binaryName);
-        if (File.Exists(appPath))
-            return appPath;
-        
-        // Return resources path even if not found (for error messages)
-        return resourcesPath;
+        // Only load third-party tools from the Resources folder.
+        return Path.Combine(ResourcesDirectory, binaryName);
     }
 
     /// <summary>
@@ -375,9 +381,8 @@ public class ProcessManager : IDisposable
                     {
                         // Check if this is our process (in our Resources directory or app directory)
                         var fileName = process.MainModule?.FileName;
-                        if (fileName != null && 
-                            (fileName.StartsWith(ResourcesDirectory, StringComparison.OrdinalIgnoreCase) ||
-                             fileName.StartsWith(AppDirectory, StringComparison.OrdinalIgnoreCase)))
+                        if (fileName != null &&
+                            fileName.StartsWith(ResourcesDirectory, StringComparison.OrdinalIgnoreCase))
                         {
                             process.Kill(true);
                             Log.Information("Killed orphaned {Name} process (PID {Pid})", name, process.Id);

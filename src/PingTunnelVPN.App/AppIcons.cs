@@ -1,4 +1,5 @@
 using System.IO;
+using PingTunnelVPN.Core;
 
 namespace PingTunnelVPN.App;
 
@@ -8,7 +9,7 @@ namespace PingTunnelVPN.App;
 /// </summary>
 public static class AppIcons
 {
-    private static string ResourcesDir => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources");
+    private static string ResourcesDir => Path.Combine(ProcessManager.AppDirectory, "Resources");
 
     /// <summary>App icon and tray icon when connected.</summary>
     public static string IconPath => Path.Combine(ResourcesDir, "icon.ico");

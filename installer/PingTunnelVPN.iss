@@ -7,7 +7,7 @@
 #endif
 
 #ifndef AppExeName
-  #define AppExeName "PingTunnelVPN.exe"
+  #define AppExeName "PingTunnel - VPN Client.exe"
 #endif
 
 #ifndef SourceDir
@@ -47,4 +47,4 @@ Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExeName}"
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\{#AppExeName}"; Description: "Launch {#AppName}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\{#AppExeName}"; Description: "Launch {#AppName}"; Flags: nowait postinstall skipifsilent shellexec; Verb: "runas"

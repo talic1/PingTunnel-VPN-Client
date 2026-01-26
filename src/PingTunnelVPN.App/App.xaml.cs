@@ -96,7 +96,7 @@ public partial class App : Application
             }
             
             // Set working directory to app directory (important when running as admin)
-            var appDir = AppDomain.CurrentDomain.BaseDirectory;
+            var appDir = ProcessManager.AppDirectory;
             Environment.CurrentDirectory = appDir;
             
             WriteCrashLog($"App directory: {appDir}");
@@ -177,8 +177,6 @@ public partial class App : Application
         {
             Log.Information("Checking binaries...");
 
-            EmbeddedResourceHelper.EnsureResourcesPresent();
-            
             ProcessManager.EnsureBinaries();
             
             // Check if binaries are available
@@ -305,7 +303,7 @@ public partial class App : Application
         catch
         {
             // Fallback to app directory if Roaming is unavailable
-            var fallback = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
+            var fallback = Path.Combine(ProcessManager.AppDirectory, "Logs");
             try
             {
                 Directory.CreateDirectory(fallback);
