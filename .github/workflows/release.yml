@@ -122,10 +122,6 @@ jobs:
           Compress-Archive -Path (Join-Path $portableSelf "*") -DestinationPath $selfZip
           Compress-Archive -Path (Join-Path $portableFw "*") -DestinationPath $fwZip
 
-          # Copy exe assets
-          Copy-Item -Path $selfExe.FullName -Destination (Join-Path $artifacts ("PingTunnelVPN-selfcontained-" + $env:APP_VERSION + ".exe"))
-          Copy-Item -Path $fwExe.FullName -Destination (Join-Path $artifacts ("PingTunnelVPN-framework-" + $env:APP_VERSION + ".exe"))
-
       - name: Build installer
         shell: pwsh
         run: |
@@ -148,5 +144,6 @@ jobs:
         with:
           tag_name: ${{ env.RELEASE_TAG }}
           files: |
-            artifacts/*.exe
-            artifacts/*.zip
+            artifacts/PingTunnelVPN-Setup-${{ env.APP_VERSION }}.exe
+            artifacts/PingTunnelVPN-framework-${{ env.APP_VERSION }}.zip
+            artifacts/PingTunnelVPN-selfcontained-${{ env.APP_VERSION }}.zip

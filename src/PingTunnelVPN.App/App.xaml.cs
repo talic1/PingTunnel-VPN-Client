@@ -1,11 +1,13 @@
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 using PingTunnelVPN.App.Logging;
 using PingTunnelVPN.Core;
 using PingTunnelVPN.Platform;
+using PingTunnelVPN.App.Views;
 using Serilog;
 
 namespace PingTunnelVPN.App;
@@ -17,7 +19,9 @@ public partial class App : Application
 {
     private TrayIconManager? _trayIconManager;
     private static string _crashLogPath = string.Empty;
+    private static string _logDirectory = string.Empty;
     private static Mutex? _singleInstanceMutex;
+    private static int _shutdownRequested;
 
     // Windows API declarations for window restoration
     [DllImport("user32.dll")]
@@ -48,9 +52,9 @@ public partial class App : Application
 
     public App()
     {
-        // Set up crash log path immediately - use app directory
-        var appDir = AppDomain.CurrentDomain.BaseDirectory;
-        _crashLogPath = Path.Combine(appDir, "crash.log");
+        // Set up log paths immediately (Roaming AppData)
+        _logDirectory = InitializeLogDirectory();
+        _crashLogPath = Path.Combine(_logDirectory, "crash.log");
         
         // Set up global exception handlers FIRST
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
@@ -69,6 +73,25 @@ public partial class App : Application
             {
                 WriteCrashLog("Another instance detected, exiting...");
                 Shutdown(0);
+                return;
+            }
+
+            // Ensure elevation (prompt if needed)
+            if (!ElevationHelper.IsElevated())
+            {
+                WriteCrashLog("Application not elevated, requesting elevation...");
+                ReleaseSingleInstanceMutex();
+
+                if (!ElevationHelper.RestartElevated())
+                {
+                    MessageBox.Show(
+                        "PingTunnelVPN requires administrator privileges.\n\nPlease run as Administrator.",
+                        "Administrator Required",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    Shutdown(1);
+                }
+
                 return;
             }
             
@@ -107,7 +130,7 @@ public partial class App : Application
         catch (Exception ex)
         {
             WriteCrashLog($"FATAL ERROR during startup: {ex}");
-            MessageBox.Show($"Failed to start application:\n\n{ex.Message}\n\nSee crash.log in app directory for details.",
+            MessageBox.Show($"Failed to start application:\n\n{ex.Message}\n\nCrash log: {_crashLogPath}",
                 "Startup Error", MessageBoxButton.OK, MessageBoxImage.Error);
             Shutdown(1);
         }
@@ -117,22 +140,15 @@ public partial class App : Application
     {
         try
         {
-            // Primary log path in LocalAppData
-            var logPath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "PingTunnelVPN",
-                "logs",
-                "pingtunnelvpn-.log");
-
-            // Ensure directory exists
-            var logDir = Path.GetDirectoryName(logPath);
-            if (!string.IsNullOrEmpty(logDir) && !Directory.Exists(logDir))
+            // Primary log path in Roaming AppData
+            var logDir = _logDirectory;
+            if (string.IsNullOrWhiteSpace(logDir))
             {
-                Directory.CreateDirectory(logDir);
+                logDir = InitializeLogDirectory();
+                _logDirectory = logDir;
+                _crashLogPath = Path.Combine(logDir, "crash.log");
             }
-
-            // Also log to app directory for easy access
-            var appLogPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app.log");
+            var logPath = Path.Combine(logDir, "PingTunnelVPN-.log");
 
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
@@ -142,17 +158,11 @@ public partial class App : Application
                     shared: true,
                     flushToDiskInterval: TimeSpan.FromSeconds(1),
                     outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
-                .WriteTo.File(appLogPath,
-                    rollingInterval: RollingInterval.Day,
-                    retainedFileCountLimit: 3,
-                    shared: true,
-                    flushToDiskInterval: TimeSpan.FromSeconds(1),
-                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
                 .WriteTo.Sink(new UiLogSink())
                 .CreateLogger();
 
-            WriteCrashLog($"Logging initialized. Logs at: {logPath} and {appLogPath}");
-            Log.Information("Logging initialized. Logs at: {LogPath} and {AppLogPath}", logPath, appLogPath);
+            WriteCrashLog($"Logging initialized. Logs at: {logPath}");
+            Log.Information("Logging initialized. Logs at: {LogPath}", logPath);
         }
         catch (Exception ex)
         {
@@ -245,34 +255,29 @@ public partial class App : Application
         
         WriteCrashLog($"UNHANDLED EXCEPTION (IsTerminating={e.IsTerminating}):\n{message}");
         Log.Fatal(ex, "Unhandled exception - application terminating");
-        Log.CloseAndFlush();
-        
-        if (e.IsTerminating)
-        {
-            MessageBox.Show($"A fatal error occurred:\n\n{ex?.Message}\n\nSee crash.log for details.",
-                "Fatal Error", MessageBoxButton.OK, MessageBoxImage.Error);
-        }
+        RequestEmergencyShutdown("Unhandled exception", ex, showDialog: e.IsTerminating);
     }
 
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
         WriteCrashLog($"DISPATCHER EXCEPTION:\n{e.Exception}");
         Log.Error(e.Exception, "Dispatcher unhandled exception");
-        
-        MessageBox.Show($"An error occurred:\n\n{e.Exception.Message}\n\nThe application will attempt to continue.\nSee crash.log for details.",
-            "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-        
-        e.Handled = true; // Prevent app from crashing for non-fatal errors
+
+        RequestEmergencyShutdown("Dispatcher unhandled exception", e.Exception, showDialog: true);
+        e.Handled = true; // Handle and shut down gracefully
     }
 
     private void OnUnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
     {
         WriteCrashLog($"UNOBSERVED TASK EXCEPTION:\n{e.Exception}");
         Log.Error(e.Exception, "Unobserved task exception");
-        e.SetObserved(); // Prevent app from crashing
+        RequestEmergencyShutdown("Unobserved task exception", e.Exception, showDialog: false);
+        e.SetObserved(); // Prevent immediate crash; we will shut down
     }
 
-    private static void WriteCrashLog(string message)
+    internal static string CrashLogPath => _crashLogPath;
+
+    internal static void WriteCrashLog(string message)
     {
         try
         {
@@ -284,6 +289,118 @@ public partial class App : Application
         {
             // Can't write to crash log - nothing we can do
         }
+    }
+
+    private static string InitializeLogDirectory()
+    {
+        try
+        {
+            var dir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "PingTunnelVPN",
+                "Logs");
+            Directory.CreateDirectory(dir);
+            return dir;
+        }
+        catch
+        {
+            // Fallback to app directory if Roaming is unavailable
+            var fallback = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
+            try
+            {
+                Directory.CreateDirectory(fallback);
+            }
+            catch
+            {
+                // Ignore
+            }
+            return fallback;
+        }
+    }
+
+    private static void ReleaseSingleInstanceMutex()
+    {
+        try
+        {
+            _singleInstanceMutex?.ReleaseMutex();
+        }
+        catch
+        {
+            // Ignore
+        }
+        finally
+        {
+            _singleInstanceMutex?.Dispose();
+            _singleInstanceMutex = null;
+        }
+    }
+
+    private void RequestEmergencyShutdown(string context, Exception? ex, bool showDialog)
+    {
+        if (Interlocked.Exchange(ref _shutdownRequested, 1) == 1)
+        {
+            return;
+        }
+
+        WriteCrashLog($"{context}: {ex}");
+        try
+        {
+            Log.Fatal(ex, "Fatal error during {Context}", context);
+        }
+        catch
+        {
+            // Ignore logging failures
+        }
+
+        void ShutdownAction()
+        {
+            if (showDialog)
+            {
+                MessageBox.Show(
+                    $"A fatal error occurred:\n\n{ex?.Message}\n\nThe application will disconnect and exit.\nCrash log: {_crashLogPath}",
+                    "Fatal Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+
+            _ = EmergencyDisconnectAndShutdownAsync();
+        }
+
+        if (Dispatcher.CheckAccess())
+        {
+            ShutdownAction();
+        }
+        else
+        {
+            Dispatcher.BeginInvoke((Action)ShutdownAction);
+        }
+    }
+
+    private async Task EmergencyDisconnectAndShutdownAsync()
+    {
+        try
+        {
+            if (Current?.MainWindow is MainWindow mainWindow)
+            {
+                await mainWindow.EmergencyShutdownAsync("Crash");
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            WriteCrashLog($"Emergency shutdown failed: {ex}");
+        }
+
+        try
+        {
+            Log.CloseAndFlush();
+        }
+        catch
+        {
+            // Ignore
+        }
+
+        Shutdown(1);
     }
 
     /// <summary>

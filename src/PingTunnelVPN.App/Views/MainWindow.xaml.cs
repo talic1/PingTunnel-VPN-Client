@@ -32,32 +32,32 @@ public partial class MainWindow : Window
     {
         try
         {
-            WriteCrashLog("MainWindow constructor starting...");
+            App.WriteCrashLog("MainWindow constructor starting...");
             
             InitializeComponent();
-            WriteCrashLog("InitializeComponent completed");
+            App.WriteCrashLog("InitializeComponent completed");
 
             // Initialize services
             _configManager = new ConfigManager();
-            WriteCrashLog("ConfigManager created");
+            App.WriteCrashLog("ConfigManager created");
             
             _configManager.Load();
-            WriteCrashLog("Config loaded");
+            App.WriteCrashLog("Config loaded");
             
             _stateMachine = new ConnectionStateMachine(_configManager);
             _stateMachine.StateChanged += OnStateChanged;
             _stateMachine.StatsUpdated += OnStatsUpdated;
-            WriteCrashLog("ConnectionStateMachine created");
+            App.WriteCrashLog("ConnectionStateMachine created");
 
             // Initialize view model
             _viewModel = new MainViewModel(_configManager);
             DataContext = _viewModel;
-            WriteCrashLog("ViewModel created and bound");
+            App.WriteCrashLog("ViewModel created and bound");
 
             // Load initial values
             LoadConfigToUI();
             UpdateEmptyState();
-            WriteCrashLog("Config loaded to UI");
+            App.WriteCrashLog("Config loaded to UI");
             
             // Update connected config indicator
             if (_stateMachine != null)
@@ -69,17 +69,17 @@ public partial class MainWindow : Window
             try
             {
                 SetupTrayIcon();
-                WriteCrashLog("Tray icon set up");
+                App.WriteCrashLog("Tray icon set up");
             }
             catch (Exception ex)
             {
-                WriteCrashLog($"Failed to setup tray icon: {ex.Message}");
+                App.WriteCrashLog($"Failed to setup tray icon: {ex.Message}");
                 Log.Warning(ex, "Failed to setup tray icon");
             }
 
             // Setup uptime timer
             SetupUptimeTimer();
-            WriteCrashLog("Uptime timer set up");
+            App.WriteCrashLog("Uptime timer set up");
 
             // Set app version
             AppVersionText.Text = $"Version {AppInfo.Version}";
@@ -96,29 +96,64 @@ public partial class MainWindow : Window
                 StatusIconContainer.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#f59e0b")!);
             }
             
-            WriteCrashLog("MainWindow constructor completed successfully");
+            App.WriteCrashLog("MainWindow constructor completed successfully");
             Log.Information("MainWindow initialized successfully");
         }
         catch (Exception ex)
         {
-            WriteCrashLog($"FATAL: MainWindow constructor failed: {ex}");
+            App.WriteCrashLog($"FATAL: MainWindow constructor failed: {ex}");
             Log.Fatal(ex, "MainWindow constructor failed");
             throw;
         }
     }
 
-    private static void WriteCrashLog(string message)
+    internal Task EmergencyShutdownAsync(string reason)
+    {
+        if (!Dispatcher.CheckAccess())
+        {
+            return Dispatcher.InvokeAsync(() => EmergencyShutdownAsync(reason)).Task.Unwrap();
+        }
+
+        if (_exitInProgress)
+        {
+            return Task.CompletedTask;
+        }
+
+        _exitRequested = true;
+        _exitInProgress = true;
+
+        try
+        {
+            SaveConfigFromUI();
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Failed to save config during emergency shutdown");
+        }
+
+        return EmergencyShutdownInternalAsync(reason);
+    }
+
+    private async Task EmergencyShutdownInternalAsync(string reason)
     {
         try
         {
-            var crashLogPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "crash.log");
-            var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-            var logEntry = $"[{timestamp}] [MainWindow] {message}\n";
-            File.AppendAllText(crashLogPath, logEntry);
+            Log.Warning("Emergency shutdown requested: {Reason}", reason);
+
+            if (_stateMachine != null && _stateMachine.CurrentState != ConnectionState.Disconnected)
+            {
+                var disconnectTask = _stateMachine.DisconnectAsync();
+                await Task.WhenAny(disconnectTask, Task.Delay(5000));
+            }
         }
-        catch
+        catch (Exception ex)
         {
-            // Ignore
+            Log.Warning(ex, "Emergency disconnect failed");
+        }
+        finally
+        {
+            _stateMachine?.Dispose();
+            Application.Current.Shutdown();
         }
     }
 
