@@ -84,12 +84,17 @@ jobs:
 
           # Self-contained output (from dist)
           $dist = Join-Path $root "dist"
-          $selfExe = Get-ChildItem -Path $dist -Filter "*.exe" | Where-Object { $_.Name -notlike "*pingtunnel*" -and $_.Name -notlike "*tun2socks*" } | Select-Object -First 1
+          # Exclude bundled dependency executables by exact filename, not substring.
+          $selfExe = Get-ChildItem -Path $dist -Filter "*.exe" -File |
+            Where-Object { $_.Name -notin @("pingtunnel.exe", "tun2socks.exe") } |
+            Select-Object -First 1
           if (-not $selfExe) { throw "Self-contained exe not found in dist" }
 
           # Framework-dependent output
           $fwPublish = Join-Path $root "dist-framework\\publish"
-          $fwExe = Get-ChildItem -Path $fwPublish -Filter "*.exe" | Where-Object { $_.Name -notlike "*pingtunnel*" -and $_.Name -notlike "*tun2socks*" } | Select-Object -First 1
+          $fwExe = Get-ChildItem -Path $fwPublish -Filter "*.exe" -File |
+            Where-Object { $_.Name -notin @("pingtunnel.exe", "tun2socks.exe") } |
+            Select-Object -First 1
           if (-not $fwExe) { throw "Framework-dependent exe not found in dist-framework publish" }
 
           # Portable self-contained (single exe)
