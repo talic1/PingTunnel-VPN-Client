@@ -1,0 +1,293 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ============================================== -->
+    <!-- Card Styles                                    -->
+    <!-- ============================================== -->
+    <Style x:Key="Card" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource Radius.L}"/>
+        <Setter Property="Padding" Value="16"/>
+    </Style>
+
+    <Style x:Key="Card.Elevated" TargetType="Border" BasedOn="{StaticResource Card}">
+        <Setter Property="Background" Value="{DynamicResource Brush.Background.Elevated}"/>
+    </Style>
+
+    <!-- Status Header Card (Disconnected) -->
+    <Style x:Key="Card.StatusHeader" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource Radius.L}"/>
+        <Setter Property="Padding" Value="20"/>
+    </Style>
+
+    <!-- Status Header Card (Connected) -->
+    <Style x:Key="Card.StatusHeader.Connected" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource Brush.Success.Background}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Success}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource Radius.L}"/>
+        <Setter Property="Padding" Value="20"/>
+    </Style>
+
+    <!-- Traffic Stats Card -->
+    <Style x:Key="Card.Stats" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource Radius.L}"/>
+        <Setter Property="Padding" Value="16"/>
+    </Style>
+
+    <!-- ============================================== -->
+    <!-- Tab Button Style                               -->
+    <!-- ============================================== -->
+    <Style x:Key="TabButton" TargetType="RadioButton">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}"/>
+        <Setter Property="FontFamily" Value="{DynamicResource Font.Primary}"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Padding" Value="16,10"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="GroupName" Value="Tabs"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Border x:Name="Border"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="{DynamicResource Radius.M}"
+                            Padding="{TemplateBinding Padding}"
+                            SnapsToDevicePixels="True">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Path x:Name="Icon"
+                                  Data="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}"
+                                  Fill="{TemplateBinding Foreground}"
+                                  Width="16"
+                                  Height="16"
+                                  Stretch="Uniform"
+                                  Margin="0,0,8,0"
+                                  VerticalAlignment="Center"/>
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource Brush.Primary}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}"/>
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                                <Condition Property="IsChecked" Value="False"/>
+                            </MultiTrigger.Conditions>
+                            <Setter Property="Background" Value="{DynamicResource Brush.Background.Hover}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}"/>
+                        </MultiTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ============================================== -->
+    <!-- Config List Item Style                         -->
+    <!-- ============================================== -->
+    <Style x:Key="ConfigListItem" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource Radius.M}"/>
+        <Setter Property="Padding" Value="16,12"/>
+        <Setter Property="Margin" Value="0,0,0,8"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+
+    <!-- ============================================== -->
+    <!-- Log Entry Styles                               -->
+    <!-- ============================================== -->
+    <Style x:Key="LogEntry" TargetType="Border">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Padding" Value="0,8"/>
+    </Style>
+
+    <!-- Log Level Badge Base -->
+    <Style x:Key="LogBadge" TargetType="Border">
+        <Setter Property="CornerRadius" Value="{DynamicResource Radius.S}"/>
+        <Setter Property="Padding" Value="8,4"/>
+        <Setter Property="Margin" Value="8,0"/>
+    </Style>
+
+    <Style x:Key="LogBadge.Info" TargetType="Border" BasedOn="{StaticResource LogBadge}">
+        <Setter Property="Background" Value="{DynamicResource Brush.Info.Background}"/>
+    </Style>
+
+    <Style x:Key="LogBadge.Success" TargetType="Border" BasedOn="{StaticResource LogBadge}">
+        <Setter Property="Background" Value="{DynamicResource Brush.Success.Background}"/>
+    </Style>
+
+    <Style x:Key="LogBadge.Warning" TargetType="Border" BasedOn="{StaticResource LogBadge}">
+        <Setter Property="Background" Value="{DynamicResource Brush.Warning.Background}"/>
+    </Style>
+
+    <Style x:Key="LogBadge.Error" TargetType="Border" BasedOn="{StaticResource LogBadge}">
+        <Setter Property="Background" Value="{DynamicResource Brush.Danger.Background}"/>
+    </Style>
+
+    <!-- Log Badge Text -->
+    <Style x:Key="LogBadgeText.Info" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource Font.Primary}"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}"/>
+    </Style>
+
+    <Style x:Key="LogBadgeText.Success" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource Font.Primary}"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Success}"/>
+    </Style>
+
+    <Style x:Key="LogBadgeText.Warning" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource Font.Primary}"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Warning}"/>
+    </Style>
+
+    <Style x:Key="LogBadgeText.Error" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource Font.Primary}"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Danger}"/>
+    </Style>
+
+    <!-- ============================================== -->
+    <!-- Status Indicator (Shield Icon Container)       -->
+    <!-- ============================================== -->
+    <Style x:Key="StatusIndicator" TargetType="Border">
+        <Setter Property="Width" Value="52"/>
+        <Setter Property="Height" Value="52"/>
+        <Setter Property="CornerRadius" Value="26"/>
+        <Setter Property="Background" Value="{DynamicResource Brush.Background.Elevated}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+    </Style>
+
+    <Style x:Key="StatusIndicator.Connected" TargetType="Border">
+        <Setter Property="Width" Value="52"/>
+        <Setter Property="Height" Value="52"/>
+        <Setter Property="CornerRadius" Value="26"/>
+        <Setter Property="Background" Value="{DynamicResource Brush.Success}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+    </Style>
+
+    <!-- ============================================== -->
+    <!-- Traffic Arrow Icons                            -->
+    <!-- ============================================== -->
+    <Style x:Key="TrafficArrow.Down" TargetType="Path">
+        <Setter Property="Data" Value="{DynamicResource Icon.ArrowDown}"/>
+        <Setter Property="Fill" Value="{DynamicResource Brush.Success}"/>
+        <Setter Property="Width" Value="14"/>
+        <Setter Property="Height" Value="14"/>
+        <Setter Property="Stretch" Value="Uniform"/>
+    </Style>
+
+    <Style x:Key="TrafficArrow.Up" TargetType="Path">
+        <Setter Property="Data" Value="{DynamicResource Icon.ArrowUp}"/>
+        <Setter Property="Fill" Value="{DynamicResource Brush.Primary.Light}"/>
+        <Setter Property="Width" Value="14"/>
+        <Setter Property="Height" Value="14"/>
+        <Setter Property="Stretch" Value="Uniform"/>
+    </Style>
+
+    <!-- ============================================== -->
+    <!-- Stroke Icon Style (for Lucide icons)          -->
+    <!-- ============================================== -->
+    <Style x:Key="Icon.Stroke" TargetType="Path">
+        <Setter Property="Stroke" Value="{DynamicResource Brush.Text.Secondary}"/>
+        <Setter Property="StrokeThickness" Value="2"/>
+        <Setter Property="StrokeStartLineCap" Value="Round"/>
+        <Setter Property="StrokeEndLineCap" Value="Round"/>
+        <Setter Property="StrokeLineJoin" Value="Round"/>
+        <Setter Property="Fill" Value="Transparent"/>
+        <Setter Property="Width" Value="24"/>
+        <Setter Property="Height" Value="24"/>
+        <Setter Property="Stretch" Value="Uniform"/>
+    </Style>
+
+    <Style x:Key="Icon.Stroke.Small" TargetType="Path" BasedOn="{StaticResource Icon.Stroke}">
+        <Setter Property="Width" Value="16"/>
+        <Setter Property="Height" Value="16"/>
+        <Setter Property="StrokeThickness" Value="1.5"/>
+    </Style>
+
+    <!-- ============================================== -->
+    <!-- Empty State                                    -->
+    <!-- ============================================== -->
+    <Style x:Key="EmptyState.Icon" TargetType="Path">
+        <Setter Property="Stroke" Value="{DynamicResource Brush.Text.Muted}"/>
+        <Setter Property="StrokeThickness" Value="1.5"/>
+        <Setter Property="StrokeStartLineCap" Value="Round"/>
+        <Setter Property="StrokeEndLineCap" Value="Round"/>
+        <Setter Property="StrokeLineJoin" Value="Round"/>
+        <Setter Property="Fill" Value="Transparent"/>
+        <Setter Property="Width" Value="48"/>
+        <Setter Property="Height" Value="48"/>
+        <Setter Property="Stretch" Value="Uniform"/>
+        <Setter Property="Opacity" Value="0.5"/>
+    </Style>
+
+    <Style x:Key="EmptyState.Text" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource Font.Primary}"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Muted}"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="Margin" Value="0,12,0,0"/>
+    </Style>
+
+    <!-- ============================================== -->
+    <!-- Dialog Overlay                                 -->
+    <!-- ============================================== -->
+    <Style x:Key="DialogOverlay" TargetType="Border">
+        <Setter Property="Background">
+            <Setter.Value>
+                <SolidColorBrush Color="#000000" Opacity="0.6"/>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="DialogCard" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource Radius.XL}"/>
+        <Setter Property="Padding" Value="24"/>
+        <Setter Property="MinWidth" Value="400"/>
+        <Setter Property="MaxWidth" Value="480"/>
+    </Style>
+
+    <!-- ============================================== -->
+    <!-- Legacy Compatibility                           -->
+    <!-- ============================================== -->
+    <Style x:Key="CardStyle" TargetType="Border" BasedOn="{StaticResource Card}"/>
+    <Style x:Key="ModernTabControlStyle" TargetType="TabControl">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+    </Style>
+    <Style x:Key="ModernTabItemStyle" TargetType="TabItem">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Padding" Value="16,12"/>
+    </Style>
+    <Style x:Key="ModernCheckBoxStyle" TargetType="CheckBox">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}"/>
+        <Setter Property="FontSize" Value="14"/>
+    </Style>
+
+</ResourceDictionary>

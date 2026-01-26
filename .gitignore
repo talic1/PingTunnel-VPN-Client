@@ -1,0 +1,57 @@
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+dist/
+
+# Visual Studio files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# NuGet packages
+*.nupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+
+# Rider
+.idea/
+
+# dotnet
+*.DotSettings.user
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Windows Thumbnail cache
+Thumbs.db
+ehthumbs.db
+
+# Third-party binaries (downloaded by fetch scripts)
+third_party/pingtunnel/*.exe
+third_party/tun2socks/*.exe
+third_party/wintun/*.dll
+!third_party/wintun/.gitkeep
+
+# Application data
+*.log
+config.json
+
+# OS files
+.DS_Store
+Desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+~$*

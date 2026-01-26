@@ -1,0 +1,137 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+
+    <!-- ============================================== -->
+    <!-- Font Family                                    -->
+    <!-- ============================================== -->
+    <FontFamily x:Key="Font.Primary">Segoe UI, Arial, sans-serif</FontFamily>
+    <FontFamily x:Key="Font.Mono">Consolas, Courier New, monospace</FontFamily>
+
+    <!-- ============================================== -->
+    <!-- Font Sizes                                     -->
+    <!-- ============================================== -->
+    <sys:Double x:Key="FontSize.XS">11</sys:Double>
+    <sys:Double x:Key="FontSize.S">12</sys:Double>
+    <sys:Double x:Key="FontSize.M">14</sys:Double>
+    <sys:Double x:Key="FontSize.L">16</sys:Double>
+    <sys:Double x:Key="FontSize.XL">20</sys:Double>
+    <sys:Double x:Key="FontSize.XXL">24</sys:Double>
+    <sys:Double x:Key="FontSize.Hero">32</sys:Double>
+
+    <!-- ============================================== -->
+    <!-- Text Block Styles                              -->
+    <!-- ============================================== -->
+
+    <!-- Hero Title - Large status text -->
+    <Style x:Key="Text.Hero" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Primary}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSize.XXL}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}"/>
+    </Style>
+
+    <!-- Header - Section headers -->
+    <Style x:Key="Text.Header" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Primary}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSize.XL}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}"/>
+    </Style>
+
+    <!-- SubHeader - Card titles, tab headers -->
+    <Style x:Key="Text.SubHeader" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Primary}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSize.L}"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}"/>
+    </Style>
+
+    <!-- Body - Primary content text -->
+    <Style x:Key="Text.Body" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Primary}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSize.M}"/>
+        <Setter Property="FontWeight" Value="Normal"/>
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}"/>
+    </Style>
+
+    <!-- Body Secondary - Secondary text, descriptions -->
+    <Style x:Key="Text.Body.Secondary" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Primary}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSize.M}"/>
+        <Setter Property="FontWeight" Value="Normal"/>
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}"/>
+    </Style>
+
+    <!-- Caption - Small labels, hints -->
+    <Style x:Key="Text.Caption" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Primary}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSize.S}"/>
+        <Setter Property="FontWeight" Value="Normal"/>
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}"/>
+    </Style>
+
+    <!-- Caption Muted - Even more subtle text -->
+    <Style x:Key="Text.Caption.Muted" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Primary}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSize.S}"/>
+        <Setter Property="FontWeight" Value="Normal"/>
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Muted}"/>
+    </Style>
+
+    <!-- Label - Form field labels -->
+    <Style x:Key="Text.Label" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Primary}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSize.M}"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}"/>
+        <Setter Property="Margin" Value="0,0,0,8"/>
+    </Style>
+
+    <!-- Stats Value - Large numbers in traffic display -->
+    <Style x:Key="Text.Stats.Value" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Primary}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSize.XL}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}"/>
+    </Style>
+
+    <!-- Stats Unit - Unit labels (KB/s, MB/s, GB/s) -->
+    <Style x:Key="Text.Stats.Unit" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Primary}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSize.S}"/>
+        <Setter Property="FontWeight" Value="Normal"/>
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}"/>
+    </Style>
+
+    <!-- Mono - Monospace text for logs, code -->
+    <Style x:Key="Text.Mono" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Mono}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSize.S}"/>
+        <Setter Property="FontWeight" Value="Normal"/>
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}"/>
+    </Style>
+
+    <!-- Button Text -->
+    <Style x:Key="Text.Button" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Primary}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSize.M}"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}"/>
+    </Style>
+
+    <!-- Tab Text -->
+    <Style x:Key="Text.Tab" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Primary}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSize.M}"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+    </Style>
+
+    <!-- ============================================== -->
+    <!-- Legacy Compatibility Styles                    -->
+    <!-- ============================================== -->
+    <Style x:Key="HeaderTextStyle" TargetType="TextBlock" BasedOn="{StaticResource Text.Header}"/>
+    <Style x:Key="SubHeaderTextStyle" TargetType="TextBlock" BasedOn="{StaticResource Text.SubHeader}"/>
+    <Style x:Key="BodyTextStyle" TargetType="TextBlock" BasedOn="{StaticResource Text.Body.Secondary}"/>
+
+</ResourceDictionary>

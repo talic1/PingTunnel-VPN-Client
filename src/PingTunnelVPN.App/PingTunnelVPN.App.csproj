@@ -1,0 +1,57 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>PingTunnelVPN.App</RootNamespace>
+    <AssemblyName>PingTunnel - VPN Client</AssemblyName>
+    <Version>1.0.0</Version>
+    <ApplicationIcon Condition="Exists('Resources\icon.ico')">Resources\icon.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="1.1.0" />
+    <PackageReference Include="Serilog" Version="3.1.1" />
+    <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PingTunnelVPN.Core\PingTunnelVPN.Core.csproj" />
+    <ProjectReference Include="..\PingTunnelVPN.System\PingTunnelVPN.System.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\pingtunnel.exe" Condition="Exists('Resources\pingtunnel.exe')" />
+    <EmbeddedResource Include="Resources\tun2socks.exe" Condition="Exists('Resources\tun2socks.exe')" />
+    <EmbeddedResource Include="Resources\wintun.dll" Condition="Exists('Resources\wintun.dll')" />
+    <EmbeddedResource Include="Resources\icon.ico" Condition="Exists('Resources\icon.ico')" />
+    <EmbeddedResource Include="Resources\icon-off.ico" Condition="Exists('Resources\icon-off.ico')" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Resources\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <!-- Ensure icon files are included in build -->
+    <None Update="Resources\icon.ico" Condition="Exists('Resources\icon.ico')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\icon-off.ico" Condition="Exists('Resources\icon-off.ico')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

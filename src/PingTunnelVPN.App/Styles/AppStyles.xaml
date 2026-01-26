@@ -1,0 +1,26 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ============================================== -->
+    <!-- Master Resource Dictionary Aggregator          -->
+    <!-- Import order matters - base resources first    -->
+    <!-- ============================================== -->
+
+    <ResourceDictionary.MergedDictionaries>
+        <!-- 1. Colors - Base color tokens and brushes -->
+        <ResourceDictionary Source="Colors.xaml"/>
+
+        <!-- 2. Typography - Font styles and text hierarchy -->
+        <ResourceDictionary Source="Typography.xaml"/>
+
+        <!-- 3. Icons - Vector path geometries -->
+        <ResourceDictionary Source="Icons.xaml"/>
+
+        <!-- 4. Controls - Button, TextBox, etc. templates -->
+        <ResourceDictionary Source="Controls.xaml"/>
+
+        <!-- 5. Components - Composite styles (Card, TabButton, etc.) -->
+        <ResourceDictionary Source="Components.xaml"/>
+    </ResourceDictionary.MergedDictionaries>
+
+</ResourceDictionary>
