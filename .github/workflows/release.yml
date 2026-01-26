@@ -48,7 +48,8 @@ jobs:
           $path = "build.config.ps1"
           if (Test-Path $path) {
             $content = Get-Content $path -Raw
-            $content = $content -replace '(\$AppVersion\s*=\s*")[^"]*(")', "`$1$env:APP_VERSION`$2"
+            # Use ${1}/${2} to avoid $11 ambiguity in regex replacement
+            $content = $content -replace '(\$AppVersion\s*=\s*")[^"]*(")', "`${1}$env:APP_VERSION`${2}"
             Set-Content -Path $path -Value $content -NoNewline
           }
 
