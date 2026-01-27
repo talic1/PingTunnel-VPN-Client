@@ -37,7 +37,7 @@ public class MainViewModel : INotifyPropertyChanged
     private int _mtu = 1420;
     private DnsMode _dnsMode = DnsMode.TunnelDns;
     private string _dnsServersText = "1.1.1.1\n8.8.8.8";
-    private string _bypassSubnetsText = "192.168.0.0/16\n10.0.0.0/8\n172.16.0.0/12";
+    private string _bypassSubnetsText = "127.0.0.0/8\n192.168.0.0/16\n10.0.0.0/8\n172.16.0.0/12";
     private bool _enableUdp = true;
     private bool _killSwitch;
     private bool _autoConnect;

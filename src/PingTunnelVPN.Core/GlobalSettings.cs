@@ -27,7 +27,7 @@ public class GlobalSettings
     /// <summary>
     /// CIDRs to bypass the tunnel (split tunneling).
     /// </summary>
-    public List<string> BypassSubnets { get; set; } = new() { "192.168.0.0/16", "10.0.0.0/8", "172.16.0.0/12" };
+    public List<string> BypassSubnets { get; set; } = new() { "127.0.0.0/8", "192.168.0.0/16", "10.0.0.0/8", "172.16.0.0/12" };
 
     /// <summary>
     /// If enabled, block all non-tunnel traffic when connected.
