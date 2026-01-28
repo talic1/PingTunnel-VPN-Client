@@ -9,6 +9,8 @@ using PingTunnelVPN.Core;
 using PingTunnelVPN.Platform;
 using PingTunnelVPN.App.Views;
 using Serilog;
+using Application = System.Windows.Application;
+using MessageBox = System.Windows.MessageBox;
 
 namespace PingTunnelVPN.App;
 
@@ -85,10 +87,11 @@ public partial class App : Application
                 if (!ElevationHelper.RestartElevated())
                 {
                     MessageBox.Show(
-                        "PingTunnelVPN requires administrator privileges.\n\nPlease run as Administrator.",
-                        "Administrator Required",
+                        "PingTunnelVPN needs administrator permission to run.\n\n" +
+                        "Please approve the UAC prompt to continue.",
+                        "Administrator Permission Required",
                         MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                        MessageBoxImage.Information);
                     Shutdown(1);
                 }
 
@@ -140,6 +143,8 @@ public partial class App : Application
     {
         try
         {
+            Log.CloseAndFlush();
+
             // Primary log path in Roaming AppData
             var logDir = _logDirectory;
             if (string.IsNullOrWhiteSpace(logDir))
@@ -274,6 +279,47 @@ public partial class App : Application
     }
 
     internal static string CrashLogPath => _crashLogPath;
+    internal static string LogDirectory => _logDirectory;
+
+    internal static bool TryUpdateLogDirectory(string? configuredDirectory, out string resolvedPath, out string? error)
+    {
+        var resolved = ResolveLogDirectory(configuredDirectory, out var resolveError);
+        if (!string.IsNullOrWhiteSpace(configuredDirectory) && resolveError != null)
+        {
+            resolvedPath = _logDirectory;
+            error = resolveError;
+            return false;
+        }
+
+        resolvedPath = resolved;
+        error = null;
+
+        if (!string.Equals(_logDirectory, resolved, StringComparison.OrdinalIgnoreCase))
+        {
+            var previousDirectory = _logDirectory;
+            var previousCrashLogPath = _crashLogPath;
+
+            _logDirectory = resolved;
+            _crashLogPath = Path.Combine(_logDirectory, "crash.log");
+
+            if (Current is App app)
+            {
+                try
+                {
+                    app.ConfigureLogging();
+                }
+                catch (Exception ex)
+                {
+                    _logDirectory = previousDirectory;
+                    _crashLogPath = previousCrashLogPath;
+                    error = ex.Message;
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
 
     internal static void WriteCrashLog(string message)
     {
@@ -290,6 +336,63 @@ public partial class App : Application
     }
 
     private static string InitializeLogDirectory()
+    {
+        var configuredDirectory = LoadConfiguredLogDirectory();
+        return ResolveLogDirectory(configuredDirectory, out _);
+    }
+
+    private static string LoadConfiguredLogDirectory()
+    {
+        try
+        {
+            var configManager = new ConfigManager();
+            var settings = configManager.GetGlobalSettings();
+            return settings.AppLogDirectory ?? string.Empty;
+        }
+        catch
+        {
+            return string.Empty;
+        }
+    }
+
+    private static string ResolveLogDirectory(string? configuredDirectory, out string? error)
+    {
+        error = null;
+
+        if (!string.IsNullOrWhiteSpace(configuredDirectory))
+        {
+            if (TryNormalizeLogDirectory(configuredDirectory, out var resolvedPath, out var resolveError))
+            {
+                return resolvedPath;
+            }
+
+            error = resolveError;
+        }
+
+        return ResolveDefaultLogDirectory();
+    }
+
+    private static bool TryNormalizeLogDirectory(string configuredDirectory, out string resolvedPath, out string? error)
+    {
+        resolvedPath = string.Empty;
+        error = null;
+
+        try
+        {
+            var expanded = Environment.ExpandEnvironmentVariables(configuredDirectory.Trim());
+            var fullPath = Path.GetFullPath(expanded);
+            Directory.CreateDirectory(fullPath);
+            resolvedPath = fullPath;
+            return true;
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            return false;
+        }
+    }
+
+    private static string ResolveDefaultLogDirectory()
     {
         try
         {

@@ -12,6 +12,15 @@ using PingTunnelVPN.Core;
 using PingTunnelVPN.Platform;
 using Serilog;
 using static PingTunnelVPN.App.FormattingHelper;
+using Application = System.Windows.Application;
+using Brush = System.Windows.Media.Brush;
+using Button = System.Windows.Controls.Button;
+using Color = System.Windows.Media.Color;
+using ColorConverter = System.Windows.Media.ColorConverter;
+using MessageBox = System.Windows.MessageBox;
+using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
+using RadioButton = System.Windows.Controls.RadioButton;
+using SaveFileDialog = Microsoft.Win32.SaveFileDialog;
 
 namespace PingTunnelVPN.App.Views;
 
@@ -25,7 +34,6 @@ public partial class MainWindow : Window
     private ConfigManager? _configManager;
     private TrayIconManager? _trayIconManager;
     private System.Windows.Threading.DispatcherTimer? _uptimeTimer;
-    private bool _exitRequested;
     private bool _exitInProgress;
 
     public MainWindow()
@@ -119,7 +127,6 @@ public partial class MainWindow : Window
             return Task.CompletedTask;
         }
 
-        _exitRequested = true;
         _exitInProgress = true;
 
         try
@@ -396,8 +403,6 @@ public partial class MainWindow : Window
         DnsModeComboBox.IsEnabled = enabled;
         DnsServersTextBox.IsEnabled = enabled;
         BypassSubnetsTextBox.IsEnabled = enabled;
-        EnableUdpToggle.IsEnabled = enabled;
-        UdpTimeoutTextBox.IsEnabled = enabled;
         KillSwitchToggle.IsEnabled = enabled;
         EncryptionModeComboBox.IsEnabled = enabled;
         EncryptionKeyPasswordBox.IsEnabled = enabled;
@@ -707,6 +712,54 @@ public partial class MainWindow : Window
         }
     }
 
+    private void OpenLogFolder_Click(object sender, RoutedEventArgs e)
+    {
+        var logDir = App.LogDirectory;
+        try
+        {
+            if (!Directory.Exists(logDir))
+            {
+                Directory.CreateDirectory(logDir);
+            }
+
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = logDir,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Failed to open log folder");
+            MessageBox.Show($"Failed to open log folder: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private void ChangeLogFolder_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel == null) return;
+
+        using var dialog = new System.Windows.Forms.FolderBrowserDialog
+        {
+            Description = "Select a folder for PingTunnelVPN logs",
+            ShowNewFolderButton = true,
+            SelectedPath = App.LogDirectory
+        };
+
+        var result = dialog.ShowDialog();
+        if (result == System.Windows.Forms.DialogResult.OK && !string.IsNullOrWhiteSpace(dialog.SelectedPath))
+        {
+            if (!App.TryUpdateLogDirectory(dialog.SelectedPath, out var resolvedPath, out var error))
+            {
+                MessageBox.Show($"Failed to update log folder:\n\n{error}", "Log Folder", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            _viewModel.AppLogDirectory = resolvedPath;
+            _viewModel.RefreshLogPaths();
+        }
+    }
+
     #endregion
 
     #region Config Import/Export
@@ -728,9 +781,10 @@ public partial class MainWindow : Window
                 var imported = _configManager.Import(dialog.FileName);
                 _configManager.SetSelectedConfig(imported.Id);
                 _viewModel.LoadConfigs();
+                _viewModel.LoadGlobalSettings(); // Reload global settings (may have been imported)
                 LoadConfigToUI();
                 UpdateEmptyState();
-                MessageBox.Show("Configuration imported successfully.", "Import", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Configuration and settings imported successfully.", "Import", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
@@ -756,7 +810,7 @@ public partial class MainWindow : Window
             {
                 SaveConfigFromUI();
                 _configManager.Export(dialog.FileName);
-                MessageBox.Show("Configuration exported successfully.", "Export", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Configuration and settings exported successfully.", "Export", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
@@ -828,7 +882,7 @@ public partial class MainWindow : Window
         WindowState = WindowState.Minimized;
     }
 
-    private void CloseButton_Click(object sender, RoutedEventArgs e)
+    private async void CloseButton_Click(object sender, RoutedEventArgs e)
     {
         var result = MessageBox.Show(
             "Are you sure you want to exit the application?",
@@ -838,9 +892,37 @@ public partial class MainWindow : Window
 
         if (result == MessageBoxResult.Yes)
         {
-            _exitRequested = true;
-            Close();
+            await ExitApplicationAsync();
         }
+    }
+
+    /// <summary>
+    /// Cleanly exits the application - disconnects if connected and shuts down.
+    /// Used by both UI close button and tray exit.
+    /// </summary>
+    private async Task ExitApplicationAsync()
+    {
+        if (_stateMachine == null) return;
+
+        // Save config before exit
+        SaveConfigFromUI();
+
+        // Ensure clean disconnect before exit
+        if (_stateMachine.CurrentState == ConnectionState.Connected || 
+            _stateMachine.CurrentState == ConnectionState.Connecting)
+        {
+            try
+            {
+                await _stateMachine.DisconnectAsync();
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Error during disconnect on exit");
+            }
+        }
+
+        _stateMachine.Dispose();
+        Application.Current.Shutdown();
     }
 
     #endregion
@@ -851,34 +933,21 @@ public partial class MainWindow : Window
     {
         if (_viewModel == null || _stateMachine == null) return;
         
-        if (!_exitRequested && _viewModel.MinimizeToTray && _stateMachine.CurrentState != ConnectionState.Disconnected)
-        {
-            e.Cancel = true;
-            Hide();
-            return;
-        }
+        // If already exiting, let it proceed
+        if (_exitInProgress) return;
 
-        // Save config on close
-        SaveConfigFromUI();
-
-        // Disconnect if connected
-        if (_stateMachine.CurrentState != ConnectionState.Disconnected && !_exitInProgress)
+        // Cancel the close and use our async exit method instead
+        // This ensures consistent behavior regardless of how close was triggered
+        if (_stateMachine.CurrentState != ConnectionState.Disconnected)
         {
             e.Cancel = true;
             _exitInProgress = true;
-            _ = Task.Run(async () =>
-            {
-                var disconnectTask = _stateMachine.DisconnectAsync();
-                await Task.WhenAny(disconnectTask, Task.Delay(5000));
-                Dispatcher.Invoke(() =>
-                {
-                    _stateMachine.Dispose();
-                    Application.Current.Shutdown();
-                });
-            });
+            _ = ExitApplicationAsync();
             return;
         }
 
+        // If already disconnected, just clean up and let close proceed
+        SaveConfigFromUI();
         _stateMachine.Dispose();
     }
 

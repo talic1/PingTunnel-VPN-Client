@@ -1,3 +1,4 @@
+using System.IO;
 using System.Text.Json.Serialization;
 
 namespace PingTunnelVPN.Core;
@@ -46,19 +47,6 @@ public class GlobalSettings
     /// </summary>
     public string EncryptionKey { get; set; } = string.Empty;
 
-    // UDP
-    /// <summary>
-    /// Enable UDP forwarding in tun2socks.
-    /// Note: UDP forwarding only works if the SOCKS5 server supports UDP ASSOCIATE.
-    /// pingtunnel does NOT support UDP ASSOCIATE, so this should typically be false.
-    /// </summary>
-    public bool EnableUdp { get; set; } = false;
-
-    /// <summary>
-    /// UDP timeout in seconds for tun2socks.
-    /// </summary>
-    public int UdpTimeout { get; set; } = 60;
-
     // Application behavior
     /// <summary>
     /// Auto-connect on application startup.
@@ -74,6 +62,17 @@ public class GlobalSettings
     /// Start minimized.
     /// </summary>
     public bool StartMinimized { get; set; } = false;
+
+    /// <summary>
+    /// Application log level (DEBUG, INFO, WARN, ERROR, FATAL).
+    /// This controls both the UI log filter and PingTunnel's log level.
+    /// </summary>
+    public string AppLogLevel { get; set; } = "INFO";
+
+    /// <summary>
+    /// Custom log directory for application logs. Leave empty to use the default location.
+    /// </summary>
+    public string AppLogDirectory { get; set; } = string.Empty;
 
     // Auto-restart
     /// <summary>
@@ -106,6 +105,96 @@ public class GlobalSettings
     /// </summary>
     public int MaxAutoRestarts { get; set; } = 3;
 
+    // PingTunnel Settings - Basic
+    /// <summary>
+    /// Local address to listen for ICMP traffic (default: 0.0.0.0).
+    /// Maps to pingtunnel -icmp_l flag.
+    /// </summary>
+    public string IcmpListenAddress { get; set; } = "0.0.0.0";
+
+    /// <summary>
+    /// Connection timeout in seconds (default: 60).
+    /// Maps to pingtunnel -timeout flag.
+    /// </summary>
+    public int ConnectionTimeout { get; set; } = 60;
+
+    // PingTunnel Settings - TCP Tunneling
+    /// <summary>
+    /// Enable TCP forwarding over ICMP tunnel (default: false).
+    /// Maps to pingtunnel -tcp flag.
+    /// </summary>
+    public bool EnableTcp { get; set; } = false;
+
+    /// <summary>
+    /// TCP send/receive buffer size (default: "1MB").
+    /// Maps to pingtunnel -tcp_bs flag.
+    /// </summary>
+    public string TcpBufferSize { get; set; } = "1MB";
+
+    /// <summary>
+    /// Maximum TCP window size (default: 20000).
+    /// Maps to pingtunnel -tcp_mw flag.
+    /// </summary>
+    public int TcpMaxWindow { get; set; } = 20000;
+
+    /// <summary>
+    /// TCP timeout resend time in milliseconds (default: 400).
+    /// Maps to pingtunnel -tcp_rst flag.
+    /// </summary>
+    public int TcpResendTimeout { get; set; } = 400;
+
+    /// <summary>
+    /// TCP compression threshold - compress packets larger than this size (0 = no compression).
+    /// Maps to pingtunnel -tcp_gz flag.
+    /// </summary>
+    public int TcpCompressionThreshold { get; set; } = 0;
+
+    /// <summary>
+    /// Print TCP connection statistics to log (default: false).
+    /// Maps to pingtunnel -tcp_stat flag.
+    /// </summary>
+    public bool TcpShowStatistics { get; set; } = false;
+
+    // PingTunnel Settings - SOCKS5 Proxy
+    /// <summary>
+    /// Enable SOCKS5 proxy mode (default: true).
+    /// Maps to pingtunnel -sock5 flag.
+    /// </summary>
+    public bool EnableSocks5 { get; set; } = true;
+
+    /// <summary>
+    /// Country codes to bypass in SOCKS5 mode (e.g., "CN" for China direct connect).
+    /// Maps to pingtunnel -s5filter flag.
+    /// </summary>
+    public string Socks5GeoFilter { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Path to GeoLite2-Country.mmdb database file for SOCKS5 geo filtering.
+    /// Maps to pingtunnel -s5ftfile flag.
+    /// </summary>
+    public string Socks5FilterDbPath { get; set; } = "GeoLite2-Country.mmdb";
+
+    // PingTunnel Settings - Logging
+    /// <summary>
+    /// Disable PingTunnel log files, only print to stdout (default: false).
+    /// Maps to pingtunnel -nolog flag.
+    /// </summary>
+    public bool PtDisableLogFiles { get; set; } = false;
+
+    /// <summary>
+    /// PingTunnel log level (default: "info").
+    /// Auto-synced from AppLogLevel.
+    /// Maps to pingtunnel -loglevel flag.
+    /// </summary>
+    public string PtLogLevel { get; set; } = "info";
+
+    // PingTunnel Settings - Debug
+    /// <summary>
+    /// Enable performance profiling on specified port (0 = disabled).
+    /// Maps to pingtunnel -profile flag.
+    /// </summary>
+    public int ProfilePort { get; set; } = 0;
+
     /// <summary>
     /// Creates a deep clone of this global settings instance.
     /// </summary>
@@ -120,16 +209,31 @@ public class GlobalSettings
             KillSwitch = KillSwitch,
             EncryptionMode = EncryptionMode,
             EncryptionKey = EncryptionKey,
-            EnableUdp = EnableUdp,
-            UdpTimeout = UdpTimeout,
             AutoConnect = AutoConnect,
             MinimizeToTray = MinimizeToTray,
             StartMinimized = StartMinimized,
+            AppLogLevel = AppLogLevel,
+            AppLogDirectory = AppLogDirectory,
             AutoRestartOnHighLatency = AutoRestartOnHighLatency,
             LatencyThresholdMs = LatencyThresholdMs,
             HighLatencyCountThreshold = HighLatencyCountThreshold,
             RestartCooldownSeconds = RestartCooldownSeconds,
-            MaxAutoRestarts = MaxAutoRestarts
+            MaxAutoRestarts = MaxAutoRestarts,
+            // PingTunnel Settings
+            IcmpListenAddress = IcmpListenAddress,
+            ConnectionTimeout = ConnectionTimeout,
+            EnableTcp = EnableTcp,
+            TcpBufferSize = TcpBufferSize,
+            TcpMaxWindow = TcpMaxWindow,
+            TcpResendTimeout = TcpResendTimeout,
+            TcpCompressionThreshold = TcpCompressionThreshold,
+            TcpShowStatistics = TcpShowStatistics,
+            EnableSocks5 = EnableSocks5,
+            Socks5GeoFilter = Socks5GeoFilter,
+            Socks5FilterDbPath = Socks5FilterDbPath,
+            PtDisableLogFiles = PtDisableLogFiles,
+            PtLogLevel = PtLogLevel,
+            ProfilePort = ProfilePort
         };
     }
 
@@ -163,6 +267,26 @@ public class GlobalSettings
             if (!IsValidCidr(subnet))
             {
                 errors.Add($"Invalid bypass subnet: {subnet}");
+            }
+        }
+
+        // Validate SOCKS5 geo filter configuration
+        if (!string.IsNullOrWhiteSpace(Socks5GeoFilter))
+        {
+            if (string.IsNullOrWhiteSpace(Socks5FilterDbPath))
+            {
+                errors.Add("SOCKS5 Geo Filter requires a database file path.");
+            }
+            else if (!File.Exists(Socks5FilterDbPath))
+            {
+                // Also check in common locations
+                var resourcesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", Socks5FilterDbPath);
+                var basePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Socks5FilterDbPath);
+                
+                if (!File.Exists(resourcesPath) && !File.Exists(basePath))
+                {
+                    errors.Add($"SOCKS5 Geo Filter database file not found: {Socks5FilterDbPath}. The geo filter feature requires a GeoLite2-Country.mmdb file.");
+                }
             }
         }
 

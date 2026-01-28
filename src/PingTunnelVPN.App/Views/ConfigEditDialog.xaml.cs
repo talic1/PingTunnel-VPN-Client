@@ -4,6 +4,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using PingTunnelVPN.App.ViewModels;
 using PingTunnelVPN.Core;
+using MessageBox = System.Windows.MessageBox;
 
 namespace PingTunnelVPN.App.Views;
 

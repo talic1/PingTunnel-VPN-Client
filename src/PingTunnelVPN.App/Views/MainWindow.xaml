@@ -10,18 +10,17 @@
         Width="420"
         MinHeight="600"
         MinWidth="380"
-        MaxWidth="480"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource Brush.Background.App}"
         Closing="Window_Closing"
         StateChanged="Window_StateChanged"
         WindowStyle="None"
         AllowsTransparency="True"
-        ResizeMode="CanMinimize">
+        ResizeMode="CanResize">
     
     <WindowChrome.WindowChrome>
         <WindowChrome CaptionHeight="36"
-                      ResizeBorderThickness="0"
+                      ResizeBorderThickness="8"
                       GlassFrameThickness="0"
                       CornerRadius="0"
                       UseAeroCaptionButtons="False"/>
@@ -637,39 +636,6 @@
                                    Style="{DynamicResource Text.SubHeader}"
                                    Margin="0,0,0,16"/>
 
-                        <!-- Enable UDP Forwarding -->
-                        <Border Background="{DynamicResource Brush.Background.Surface}"
-                                CornerRadius="{DynamicResource Radius.M}"
-                                Padding="16"
-                                Margin="0,0,0,8">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <StackPanel Grid.Column="0">
-                                    <TextBlock Text="Enable UDP Forwarding"
-                                               Style="{DynamicResource Text.Body}"/>
-                                    <TextBlock Text="Forward UDP traffic through the tunnel"
-                                               Style="{DynamicResource Text.Caption}"/>
-                                </StackPanel>
-                                <ToggleButton x:Name="EnableUdpToggle"
-                                              Grid.Column="1"
-                                              Style="{DynamicResource ToggleSwitch}"
-                                              IsChecked="{Binding EnableUdp, Mode=TwoWay}"
-                                              VerticalAlignment="Center"/>
-                            </Grid>
-                        </Border>
-
-                        <!-- UDP Timeout -->
-                        <TextBlock Text="UDP Timeout (seconds)"
-                                   Style="{DynamicResource Text.Label}"/>
-                        <TextBox x:Name="UdpTimeoutTextBox"
-                                 Style="{DynamicResource TextBox.Modern}"
-                                 Text="{Binding UdpTimeout, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                 Tag="60"
-                                 Margin="0,0,0,8"/>
-
                         <!-- Kill Switch -->
                         <Border Background="{DynamicResource Brush.Background.Surface}"
                                 CornerRadius="{DynamicResource Radius.M}"
@@ -694,49 +660,514 @@
                             </Grid>
                         </Border>
 
-                        <!-- Encryption Section -->
-                        <TextBlock Text="Encryption"
-                                   Style="{DynamicResource Text.SubHeader}"
-                                   Margin="0,0,0,16"/>
+                        <!-- ============================================== -->
+                        <!-- PingTunnel Settings Section (Collapsible)      -->
+                        <!-- ============================================== -->
+                        <Expander x:Name="PingTunnelSettingsExpander"
+                                  IsExpanded="{Binding IsPingTunnelSettingsExpanded, Mode=TwoWay}"
+                                  Margin="0,0,0,24">
+                            <Expander.Header>
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Data="{DynamicResource Icon.Settings}"
+                                          Fill="{DynamicResource Brush.Text.Secondary}"
+                                          Width="16" Height="16"
+                                          Stretch="Uniform"
+                                          Margin="0,0,8,0"
+                                          VerticalAlignment="Center"/>
+                                    <TextBlock Text="PingTunnel Settings"
+                                               Style="{DynamicResource Text.SubHeader}"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Expander.Header>
+                            <StackPanel Margin="0,16,0,0">
 
-                        <!-- Encryption Mode -->
-                        <TextBlock Text="Encryption Mode"
-                                   Style="{DynamicResource Text.Label}"/>
-                        <ComboBox x:Name="EncryptionModeComboBox"
-                                  Style="{DynamicResource ComboBox.Modern}"
-                                  SelectedValue="{Binding EncryptionMode, Mode=TwoWay}"
-                                  SelectedValuePath="Tag"
-                                  Margin="0,0,0,16">
-                            <ComboBoxItem Content="None" Tag="none" Style="{DynamicResource ComboBoxItem.Modern}"/>
-                            <ComboBoxItem Content="AES-128" Tag="aes128" Style="{DynamicResource ComboBoxItem.Modern}"/>
-                            <ComboBoxItem Content="AES-256" Tag="aes256" Style="{DynamicResource ComboBoxItem.Modern}"/>
-                            <ComboBoxItem Content="ChaCha20" Tag="chacha20" Style="{DynamicResource ComboBoxItem.Modern}"/>
-                        </ComboBox>
+                                <!-- Basic Settings Sub-Section -->
+                                <TextBlock Text="Basic Settings"
+                                           Style="{DynamicResource Text.Label}"
+                                           FontWeight="SemiBold"
+                                           Margin="0,0,0,12"/>
 
-                        <!-- Encryption Key -->
-                        <TextBlock Text="Encryption Key"
-                                   Style="{DynamicResource Text.Label}"/>
-                        <Grid Margin="0,0,0,24">
-                            <PasswordBox x:Name="EncryptionKeyPasswordBox"
-                                         Style="{DynamicResource PasswordBox.Modern}"
-                                         PasswordChanged="EncryptionKeyPasswordBox_PasswordChanged"/>
-                            <TextBox x:Name="EncryptionKeyTextBox"
-                                     Style="{DynamicResource TextBox.Modern}"
-                                     Text="{Binding EncryptionKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                     Visibility="Collapsed"/>
-                            <Button x:Name="ToggleEncryptionKeyButton"
-                                    Style="{DynamicResource Button.Icon}"
-                                    Click="ToggleEncryptionKeyVisibility_Click"
-                                    HorizontalAlignment="Right"
-                                    Margin="0,0,4,0"
-                                    Width="32" Height="32">
-                                <Path x:Name="EncryptionKeyToggleIcon"
-                                      Data="{DynamicResource Icon.Eye}"
-                                      Fill="{DynamicResource Brush.Text.Secondary}"
-                                      Width="16" Height="16"
-                                      Stretch="Uniform"/>
-                            </Button>
-                        </Grid>
+                                <!-- ICMP Listen Address -->
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="ICMP Listen Address"
+                                                   Style="{DynamicResource Text.Label}"/>
+                                        <TextBox Style="{DynamicResource TextBox.Modern}"
+                                                 Text="{Binding IcmpListenAddress, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                 Tag="0.0.0.0"/>
+                                    </StackPanel>
+                                    <Border Grid.Column="1" 
+                                            ToolTip="Listen for ICMP traffic on this address (default: 0.0.0.0)"
+                                            VerticalAlignment="Bottom"
+                                            Margin="8,0,0,8"
+                                            Cursor="Help">
+                                        <Path Data="{DynamicResource Icon.Info}"
+                                              Fill="{DynamicResource Brush.Text.Secondary}"
+                                              Width="16" Height="16"
+                                              Stretch="Uniform"/>
+                                    </Border>
+                                </Grid>
+
+                                <!-- Connection Timeout -->
+                                <Grid Margin="0,0,0,16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Connection Timeout (seconds)"
+                                                   Style="{DynamicResource Text.Label}"/>
+                                        <TextBox Style="{DynamicResource TextBox.Modern}"
+                                                 Text="{Binding ConnectionTimeout, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                 Tag="60"/>
+                                    </StackPanel>
+                                    <Border Grid.Column="1" 
+                                            ToolTip="Connection timeout in seconds (default: 60)"
+                                            VerticalAlignment="Bottom"
+                                            Margin="8,0,0,8"
+                                            Cursor="Help">
+                                        <Path Data="{DynamicResource Icon.Info}"
+                                              Fill="{DynamicResource Brush.Text.Secondary}"
+                                              Width="16" Height="16"
+                                              Stretch="Uniform"/>
+                                    </Border>
+                                </Grid>
+
+                                <!-- Encryption Sub-Section -->
+                                <TextBlock Text="Encryption"
+                                           Style="{DynamicResource Text.Label}"
+                                           FontWeight="SemiBold"
+                                           Margin="0,8,0,12"/>
+
+                                <!-- Encryption Mode -->
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Encryption Mode"
+                                                   Style="{DynamicResource Text.Label}"/>
+                                        <ComboBox x:Name="EncryptionModeComboBox"
+                                                  Style="{DynamicResource ComboBox.Modern}"
+                                                  SelectedValue="{Binding EncryptionMode, Mode=TwoWay}"
+                                                  SelectedValuePath="Tag">
+                                            <ComboBoxItem Content="None" Tag="none" Style="{DynamicResource ComboBoxItem.Modern}"/>
+                                            <ComboBoxItem Content="AES-128" Tag="aes128" Style="{DynamicResource ComboBoxItem.Modern}"/>
+                                            <ComboBoxItem Content="AES-256" Tag="aes256" Style="{DynamicResource ComboBoxItem.Modern}"/>
+                                            <ComboBoxItem Content="ChaCha20" Tag="chacha20" Style="{DynamicResource ComboBoxItem.Modern}"/>
+                                        </ComboBox>
+                                    </StackPanel>
+                                    <Border Grid.Column="1" 
+                                            ToolTip="Encryption mode: aes128, aes256, chacha20"
+                                            VerticalAlignment="Bottom"
+                                            Margin="8,0,0,8"
+                                            Cursor="Help">
+                                        <Path Data="{DynamicResource Icon.Info}"
+                                              Fill="{DynamicResource Brush.Text.Secondary}"
+                                              Width="16" Height="16"
+                                              Stretch="Uniform"/>
+                                    </Border>
+                                </Grid>
+
+                                <!-- Encryption Key -->
+                                <Grid Margin="0,0,0,16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Encryption Key"
+                                                   Style="{DynamicResource Text.Label}"/>
+                                        <Grid>
+                                            <PasswordBox x:Name="EncryptionKeyPasswordBox"
+                                                         Style="{DynamicResource PasswordBox.Modern}"
+                                                         PasswordChanged="EncryptionKeyPasswordBox_PasswordChanged"/>
+                                            <TextBox x:Name="EncryptionKeyTextBox"
+                                                     Style="{DynamicResource TextBox.Modern}"
+                                                     Text="{Binding EncryptionKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                     Visibility="Collapsed"/>
+                                            <Button x:Name="ToggleEncryptionKeyButton"
+                                                    Style="{DynamicResource Button.Icon}"
+                                                    Click="ToggleEncryptionKeyVisibility_Click"
+                                                    HorizontalAlignment="Right"
+                                                    Margin="0,0,4,0"
+                                                    Width="32" Height="32">
+                                                <Path x:Name="EncryptionKeyToggleIcon"
+                                                      Data="{DynamicResource Icon.Eye}"
+                                                      Fill="{DynamicResource Brush.Text.Secondary}"
+                                                      Width="16" Height="16"
+                                                      Stretch="Uniform"/>
+                                            </Button>
+                                        </Grid>
+                                    </StackPanel>
+                                    <Border Grid.Column="1" 
+                                            ToolTip="Encryption key, supports base64 encoded key or passphrase"
+                                            VerticalAlignment="Bottom"
+                                            Margin="8,0,0,8"
+                                            Cursor="Help">
+                                        <Path Data="{DynamicResource Icon.Info}"
+                                              Fill="{DynamicResource Brush.Text.Secondary}"
+                                              Width="16" Height="16"
+                                              Stretch="Uniform"/>
+                                    </Border>
+                                </Grid>
+
+                                <!-- Reliable Mode Sub-Section -->
+                                <TextBlock Text="Reliable Mode"
+                                           Style="{DynamicResource Text.Label}"
+                                           FontWeight="SemiBold"
+                                           Margin="0,8,0,12"/>
+
+                                <!-- Enable Reliable Mode -->
+                                <Border Background="{DynamicResource Brush.Background.Surface}"
+                                        CornerRadius="{DynamicResource Radius.M}"
+                                        Padding="12"
+                                        Margin="0,0,0,12">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="Enable Reliable Mode"
+                                                       Style="{DynamicResource Text.Body}"/>
+                                            <TextBlock Text="Use reliable packet delivery (recommended for unstable networks)"
+                                                       Style="{DynamicResource Text.Caption}"/>
+                                        </StackPanel>
+                                        <Border Grid.Column="1" 
+                                                ToolTip="Adds TCP-like reliability to the ICMP tunnel for better performance on lossy connections"
+                                                VerticalAlignment="Center"
+                                                Margin="0,0,12,0"
+                                                Cursor="Help">
+                                            <Path Data="{DynamicResource Icon.Info}"
+                                                  Fill="{DynamicResource Brush.Text.Secondary}"
+                                                  Width="14" Height="14"
+                                                  Stretch="Uniform"/>
+                                        </Border>
+                                        <ToggleButton Grid.Column="2"
+                                                      Style="{DynamicResource ToggleSwitch}"
+                                                      IsChecked="{Binding EnableTcp, Mode=TwoWay}"
+                                                      VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- TCP Settings Grid Row 1 -->
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="12"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="Buffer Size"
+                                                       Style="{DynamicResource Text.Label}"/>
+                                            <Border Grid.Column="1" 
+                                                    ToolTip="TCP send/receive buffer size (e.g., 1MB, 512KB)"
+                                                    VerticalAlignment="Center"
+                                                    Margin="4,0,0,0"
+                                                    Cursor="Help">
+                                                <Path Data="{DynamicResource Icon.Info}"
+                                                      Fill="{DynamicResource Brush.Text.Secondary}"
+                                                      Width="12" Height="12"
+                                                      Stretch="Uniform"/>
+                                            </Border>
+                                        </Grid>
+                                        <TextBox Style="{DynamicResource TextBox.Modern}"
+                                                 Text="{Binding TcpBufferSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                 Tag="1MB"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="2">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="Max Window"
+                                                       Style="{DynamicResource Text.Label}"/>
+                                            <Border Grid.Column="1" 
+                                                    ToolTip="Maximum TCP window size (default: 20000)"
+                                                    VerticalAlignment="Center"
+                                                    Margin="4,0,0,0"
+                                                    Cursor="Help">
+                                                <Path Data="{DynamicResource Icon.Info}"
+                                                      Fill="{DynamicResource Brush.Text.Secondary}"
+                                                      Width="12" Height="12"
+                                                      Stretch="Uniform"/>
+                                            </Border>
+                                        </Grid>
+                                        <TextBox Style="{DynamicResource TextBox.Modern}"
+                                                 Text="{Binding TcpMaxWindow, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                 Tag="20000"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- TCP Settings Grid Row 2 -->
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="12"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="Resend Timeout (ms)"
+                                                       Style="{DynamicResource Text.Label}"/>
+                                            <Border Grid.Column="1" 
+                                                    ToolTip="TCP timeout resend time in milliseconds (default: 400)"
+                                                    VerticalAlignment="Center"
+                                                    Margin="4,0,0,0"
+                                                    Cursor="Help">
+                                                <Path Data="{DynamicResource Icon.Info}"
+                                                      Fill="{DynamicResource Brush.Text.Secondary}"
+                                                      Width="12" Height="12"
+                                                      Stretch="Uniform"/>
+                                            </Border>
+                                        </Grid>
+                                        <TextBox Style="{DynamicResource TextBox.Modern}"
+                                                 Text="{Binding TcpResendTimeout, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                 Tag="400"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="2">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="Compression Threshold"
+                                                       Style="{DynamicResource Text.Label}"/>
+                                            <Border Grid.Column="1" 
+                                                    ToolTip="Compress packets larger than this size (0 = no compression)"
+                                                    VerticalAlignment="Center"
+                                                    Margin="4,0,0,0"
+                                                    Cursor="Help">
+                                                <Path Data="{DynamicResource Icon.Info}"
+                                                      Fill="{DynamicResource Brush.Text.Secondary}"
+                                                      Width="12" Height="12"
+                                                      Stretch="Uniform"/>
+                                            </Border>
+                                        </Grid>
+                                        <TextBox Style="{DynamicResource TextBox.Modern}"
+                                                 Text="{Binding TcpCompressionThreshold, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                 Tag="0"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- TCP Show Statistics -->
+                                <Border Background="{DynamicResource Brush.Background.Surface}"
+                                        CornerRadius="{DynamicResource Radius.M}"
+                                        Padding="12"
+                                        Margin="0,0,0,16">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="Show TCP Statistics"
+                                                       Style="{DynamicResource Text.Body}"/>
+                                            <TextBlock Text="Print TCP connection statistics to log"
+                                                       Style="{DynamicResource Text.Caption}"/>
+                                        </StackPanel>
+                                        <Border Grid.Column="1" 
+                                                ToolTip="Print TCP connection statistics to log"
+                                                VerticalAlignment="Center"
+                                                Margin="0,0,12,0"
+                                                Cursor="Help">
+                                            <Path Data="{DynamicResource Icon.Info}"
+                                                  Fill="{DynamicResource Brush.Text.Secondary}"
+                                                  Width="14" Height="14"
+                                                  Stretch="Uniform"/>
+                                        </Border>
+                                        <ToggleButton Grid.Column="2"
+                                                      Style="{DynamicResource ToggleSwitch}"
+                                                      IsChecked="{Binding TcpShowStatistics, Mode=TwoWay}"
+                                                      VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- SOCKS5 Proxy Sub-Section -->
+                                <TextBlock Text="SOCKS5 Proxy"
+                                           Style="{DynamicResource Text.Label}"
+                                           FontWeight="SemiBold"
+                                           Margin="0,8,0,12"/>
+
+                                <!-- Enable SOCKS5 -->
+                                <Border Background="{DynamicResource Brush.Background.Surface}"
+                                        CornerRadius="{DynamicResource Radius.M}"
+                                        Padding="12"
+                                        Margin="0,0,0,12">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="Enable SOCKS5 Proxy"
+                                                       Style="{DynamicResource Text.Body}"/>
+                                            <TextBlock Text="Enable SOCKS5 proxy forwarding mode"
+                                                       Style="{DynamicResource Text.Caption}"/>
+                                        </StackPanel>
+                                        <Border Grid.Column="1" 
+                                                ToolTip="Enable SOCKS5 proxy forwarding mode"
+                                                VerticalAlignment="Center"
+                                                Margin="0,0,12,0"
+                                                Cursor="Help">
+                                            <Path Data="{DynamicResource Icon.Info}"
+                                                  Fill="{DynamicResource Brush.Text.Secondary}"
+                                                  Width="14" Height="14"
+                                                  Stretch="Uniform"/>
+                                        </Border>
+                                        <ToggleButton Grid.Column="2"
+                                                      Style="{DynamicResource ToggleSwitch}"
+                                                      IsChecked="{Binding EnableSocks5, Mode=TwoWay}"
+                                                      VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Geo Filter -->
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Geo Filter (e.g., CN)"
+                                                   Style="{DynamicResource Text.Label}"/>
+                                        <TextBox Style="{DynamicResource TextBox.Modern}"
+                                                 Text="{Binding Socks5GeoFilter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                 Tag=""/>
+                                    </StackPanel>
+                                    <Border Grid.Column="1" 
+                                            ToolTip="Country codes to bypass (e.g., CN for China direct connect)"
+                                            VerticalAlignment="Bottom"
+                                            Margin="8,0,0,8"
+                                            Cursor="Help">
+                                        <Path Data="{DynamicResource Icon.Info}"
+                                              Fill="{DynamicResource Brush.Text.Secondary}"
+                                              Width="16" Height="16"
+                                              Stretch="Uniform"/>
+                                    </Border>
+                                </Grid>
+
+                                <!-- Filter DB Path -->
+                                <Grid Margin="0,0,0,16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Filter Database Path"
+                                                   Style="{DynamicResource Text.Label}"/>
+                                        <TextBox Style="{DynamicResource TextBox.Modern}"
+                                                 Text="{Binding Socks5FilterDbPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                 Tag="GeoLite2-Country.mmdb"/>
+                                    </StackPanel>
+                                    <Border Grid.Column="1" 
+                                            ToolTip="Path to GeoLite2-Country.mmdb database file"
+                                            VerticalAlignment="Bottom"
+                                            Margin="8,0,0,8"
+                                            Cursor="Help">
+                                        <Path Data="{DynamicResource Icon.Info}"
+                                              Fill="{DynamicResource Brush.Text.Secondary}"
+                                              Width="16" Height="16"
+                                              Stretch="Uniform"/>
+                                    </Border>
+                                </Grid>
+
+                                <!-- Logging Sub-Section -->
+                                <TextBlock Text="Logging"
+                                           Style="{DynamicResource Text.Label}"
+                                           FontWeight="SemiBold"
+                                           Margin="0,8,0,12"/>
+
+                                <!-- Disable PingTunnel Log Files -->
+                                <Border Background="{DynamicResource Brush.Background.Surface}"
+                                        CornerRadius="{DynamicResource Radius.M}"
+                                        Padding="12"
+                                        Margin="0,0,0,16">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="Disable PingTunnel Log Files"
+                                                       Style="{DynamicResource Text.Body}"/>
+                                            <TextBlock Text="Prevent pingtunnel from creating its own log files"
+                                                       Style="{DynamicResource Text.Caption}"/>
+                                        </StackPanel>
+                                        <Border Grid.Column="1" 
+                                                ToolTip="When enabled, pingtunnel will not create log files in its directory"
+                                                VerticalAlignment="Center"
+                                                Margin="0,0,12,0"
+                                                Cursor="Help">
+                                            <Path Data="{DynamicResource Icon.Info}"
+                                                  Fill="{DynamicResource Brush.Text.Secondary}"
+                                                  Width="14" Height="14"
+                                                  Stretch="Uniform"/>
+                                        </Border>
+                                        <ToggleButton Grid.Column="2"
+                                                      Style="{DynamicResource ToggleSwitch}"
+                                                      IsChecked="{Binding PtDisableLogFiles, Mode=TwoWay}"
+                                                      VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Debug Sub-Section -->
+                                <TextBlock Text="Debug"
+                                           Style="{DynamicResource Text.Label}"
+                                           FontWeight="SemiBold"
+                                           Margin="0,8,0,12"/>
+
+                                <!-- Profile Port -->
+                                <Grid Margin="0,0,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Profile Port (0 = disabled)"
+                                                   Style="{DynamicResource Text.Label}"/>
+                                        <TextBox Style="{DynamicResource TextBox.Modern}"
+                                                 Text="{Binding ProfilePort, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                 Tag="0"/>
+                                    </StackPanel>
+                                    <Border Grid.Column="1" 
+                                            ToolTip="Enable performance profiling on this port (0 = disabled)"
+                                            VerticalAlignment="Bottom"
+                                            Margin="8,0,0,8"
+                                            Cursor="Help">
+                                        <Path Data="{DynamicResource Icon.Info}"
+                                              Fill="{DynamicResource Brush.Text.Secondary}"
+                                              Width="16" Height="16"
+                                              Stretch="Uniform"/>
+                                    </Border>
+                                </Grid>
+
+                            </StackPanel>
+                        </Expander>
 
                         <!-- Auto-Restart Section -->
                         <TextBlock Text="Auto-Restart on High Latency"
@@ -832,6 +1263,73 @@
                             <ComboBoxItem Content="Fatal (Critical only)" Tag="FATAL" Style="{DynamicResource ComboBoxItem.Modern}"/>
                         </ComboBox>
 
+                        <!-- Log Files -->
+                        <TextBlock Text="Log Files"
+                                   Style="{DynamicResource Text.Label}"
+                                   Margin="0,0,0,8"/>
+
+                        <Border Background="{DynamicResource Brush.Background.Surface}"
+                                CornerRadius="{DynamicResource Radius.M}"
+                                Padding="16"
+                                Margin="0,0,0,24">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0"
+                                           Text="Log Folder"
+                                           Style="{DynamicResource Text.Body}"/>
+
+                                <TextBox Grid.Row="1" Grid.Column="0"
+                                         Style="{DynamicResource TextBox.Modern}"
+                                         Text="{Binding EffectiveLogDirectory, Mode=OneWay}"
+                                         IsReadOnly="True"
+                                         TextWrapping="NoWrap"
+                                         ToolTip="{Binding EffectiveLogDirectory}"
+                                         Margin="0,6,0,0"/>
+
+                                <StackPanel Grid.Row="1" Grid.Column="1"
+                                            Orientation="Horizontal"
+                                            VerticalAlignment="Center"
+                                            Margin="12,6,0,0">
+                                    <Button Style="{DynamicResource Button.Icon}"
+                                            Click="OpenLogFolder_Click"
+                                            ToolTip="Open log folder">
+                                        <Path Data="{DynamicResource Icon.FolderOpen}"
+                                              Fill="{DynamicResource Brush.Text.Secondary}"
+                                              Width="16" Height="16"
+                                              Stretch="Uniform"/>
+                                    </Button>
+                                    <Button Style="{DynamicResource Button.Icon}"
+                                            Click="ChangeLogFolder_Click"
+                                            ToolTip="Change log folder"
+                                            Margin="6,0,0,0">
+                                        <Path Data="{DynamicResource Icon.Edit}"
+                                              Fill="{DynamicResource Brush.Text.Secondary}"
+                                              Width="16" Height="16"
+                                              Stretch="Uniform"/>
+                                    </Button>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,8,0,0">
+                                    <TextBlock Text="Current log file"
+                                               Style="{DynamicResource Text.Caption}"
+                                               Foreground="{DynamicResource Brush.Text.Secondary}"/>
+                                    <TextBlock Text="{Binding CurrentLogFilePath}"
+                                               Style="{DynamicResource Text.Caption}"
+                                               Foreground="{DynamicResource Brush.Text.Secondary}"
+                                               TextTrimming="CharacterEllipsis"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
                         <!-- Application Behavior Section -->
                         <TextBlock Text="Application Behavior"
                                    Style="{DynamicResource Text.SubHeader}"
@@ -874,7 +1372,7 @@
                                 <StackPanel Grid.Column="0">
                                     <TextBlock Text="Minimize to Tray"
                                                Style="{DynamicResource Text.Body}"/>
-                                    <TextBlock Text="Minimize to system tray on close"
+                                    <TextBlock Text="Minimize to system tray instead of taskbar"
                                                Style="{DynamicResource Text.Caption}"/>
                                 </StackPanel>
                                 <ToggleButton x:Name="MinimizeToTrayToggle"

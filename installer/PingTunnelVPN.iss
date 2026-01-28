@@ -47,7 +47,7 @@ Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExeName}"
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\{#AppExeName}"; Description: "Launch {#AppName}"; Flags: nowait postinstall skipifsilent shellexec; Verb: "runas"; WorkingDir: "{app}"; StatusMsg: "Launching {#AppName}..."
+Filename: "{cmd}"; Parameters: "/C powershell -NoProfile -ExecutionPolicy Bypass -Command ""Start-Process -FilePath ''{app}\{#AppExeName}'' -WorkingDirectory ''{app}'' -Verb RunAs"""; Description: "Launch {#AppName}"; Flags: nowait postinstall skipifsilent runhidden; StatusMsg: "Requesting administrator permission for {#AppName}..."
 
 [UninstallRun]
 Filename: "{cmd}"; Parameters: "/C taskkill /F /T /IM ""{#AppExeName}"" >NUL 2>&1 || exit /b 0"; Flags: runhidden

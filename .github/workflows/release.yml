@@ -28,6 +28,51 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.20.x"
+
+      - name: Build pingtunnel from source
+        shell: pwsh
+        run: |
+          $version = "2.8"
+          $repoUrl = "https://github.com/esrrhs/pingtunnel.git"
+          $outputDir = Join-Path $pwd "third_party\\pingtunnel"
+          if (-not (Test-Path $outputDir)) { New-Item -ItemType Directory -Path $outputDir | Out-Null }
+          $exePath = Join-Path $outputDir "pingtunnel.exe"
+          if (Test-Path $exePath) { Remove-Item $exePath -Force }
+
+          $repoDir = Join-Path $env:RUNNER_TEMP "pingtunnel-src"
+          if (Test-Path $repoDir) { Remove-Item $repoDir -Recurse -Force }
+
+          $cloned = $false
+          foreach ($branch in @("v$version", $version)) {
+            try {
+              git clone --depth 1 --branch $branch $repoUrl $repoDir
+              $cloned = $true
+              break
+            }
+            catch {
+              if (Test-Path $repoDir) { Remove-Item $repoDir -Recurse -Force }
+            }
+          }
+
+          if (-not $cloned) {
+            git clone --depth 1 $repoUrl $repoDir
+          }
+
+          Push-Location $repoDir
+          try {
+            go version
+            go build -o $exePath
+          }
+          finally {
+            Pop-Location
+          }
+
+          if (-not (Test-Path $exePath)) { throw "pingtunnel.exe build failed" }
+
       - name: Install Inno Setup
         run: choco install innosetup -y
 

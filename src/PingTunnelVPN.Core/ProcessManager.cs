@@ -125,7 +125,7 @@ public class ProcessManager : IDisposable
     /// <summary>
     /// Starts the pingtunnel client process.
     /// </summary>
-    public void StartPingTunnel(string serverAddress, int localPort, string key, string? encryptMode = null, string? encryptKey = null)
+    public void StartPingTunnel(string serverAddress, int localPort, string key, GlobalSettings settings)
     {
         lock (_lock)
         {
@@ -141,20 +141,89 @@ public class ProcessManager : IDisposable
             }
 
             // Build arguments
-            var args = $"-type client -l :{localPort} -s {serverAddress} -sock5 1";
+            var args = $"-type client -l :{localPort} -s {serverAddress}";
             
+            // SOCKS5 settings
+            if (settings.EnableSocks5)
+            {
+                args += " -sock5 1";
+                if (!string.IsNullOrWhiteSpace(settings.Socks5GeoFilter))
+                {
+                    args += $" -s5filter {settings.Socks5GeoFilter}";
+                }
+                if (!string.IsNullOrWhiteSpace(settings.Socks5FilterDbPath) && settings.Socks5FilterDbPath != "GeoLite2-Country.mmdb")
+                {
+                    args += $" -s5ftfile \"{settings.Socks5FilterDbPath}\"";
+                }
+            }
+            
+            // Basic settings
+            if (!string.IsNullOrWhiteSpace(settings.IcmpListenAddress) && settings.IcmpListenAddress != "0.0.0.0")
+            {
+                args += $" -icmp_l {settings.IcmpListenAddress}";
+            }
+            if (settings.ConnectionTimeout != 60)
+            {
+                args += $" -timeout {settings.ConnectionTimeout}";
+            }
+            
+            // Key
             if (!string.IsNullOrWhiteSpace(key))
             {
                 args += $" -key {key}";
             }
 
-            if (!string.IsNullOrWhiteSpace(encryptMode) && encryptMode != "none")
+            // Encryption
+            if (!string.IsNullOrWhiteSpace(settings.EncryptionMode) && settings.EncryptionMode != "none")
             {
-                args += $" -encrypt {encryptMode}";
-                if (!string.IsNullOrWhiteSpace(encryptKey))
+                args += $" -encrypt {settings.EncryptionMode}";
+                if (!string.IsNullOrWhiteSpace(settings.EncryptionKey))
                 {
-                    args += $" -encrypt-key {encryptKey}";
+                    args += $" -encrypt-key {settings.EncryptionKey}";
                 }
+            }
+            
+            // TCP settings
+            if (settings.EnableTcp)
+            {
+                args += " -tcp 1";
+                if (!string.IsNullOrWhiteSpace(settings.TcpBufferSize) && settings.TcpBufferSize != "1MB")
+                {
+                    args += $" -tcp_bs {settings.TcpBufferSize}";
+                }
+                if (settings.TcpMaxWindow != 20000)
+                {
+                    args += $" -tcp_mw {settings.TcpMaxWindow}";
+                }
+                if (settings.TcpResendTimeout != 400)
+                {
+                    args += $" -tcp_rst {settings.TcpResendTimeout}";
+                }
+                if (settings.TcpCompressionThreshold > 0)
+                {
+                    args += $" -tcp_gz {settings.TcpCompressionThreshold}";
+                }
+                if (settings.TcpShowStatistics)
+                {
+                    args += " -tcp_stat 1";
+                }
+            }
+            
+            // Logging settings
+            if (settings.PtDisableLogFiles)
+            {
+                args += " -nolog 1";
+            }
+            // Note: We never disable console output (-noprint) because we capture it for our logs
+            if (!string.IsNullOrWhiteSpace(settings.PtLogLevel) && settings.PtLogLevel != "info")
+            {
+                args += $" -loglevel {settings.PtLogLevel}";
+            }
+            
+            // Debug settings
+            if (settings.ProfilePort > 0)
+            {
+                args += $" -profile {settings.ProfilePort}";
             }
 
             Log.Information("Starting pingtunnel: {Args}", args.Replace(key ?? "", "****"));
@@ -210,7 +279,7 @@ public class ProcessManager : IDisposable
     /// <summary>
     /// Starts the tun2socks process.
     /// </summary>
-    public void StartTun2Socks(int socksPort, int mtu = 1420, bool enableUdp = false, int udpTimeout = 60)
+    public void StartTun2Socks(int socksPort, int mtu = 1420)
     {
         lock (_lock)
         {
@@ -225,13 +294,8 @@ public class ProcessManager : IDisposable
                 throw new FileNotFoundException("tun2socks.exe not found", exePath);
             }
 
-            // Build arguments
+            // Build arguments (UDP is not supported by pingtunnel, so we don't enable it)
             var args = $"-device wintun -proxy socks5://127.0.0.1:{socksPort} -mtu {mtu} -loglevel info";
-            
-            if (enableUdp)
-            {
-                args += $" -udp-timeout {udpTimeout}s";
-            }
 
             Log.Information("Starting tun2socks: {Args}", args);
 

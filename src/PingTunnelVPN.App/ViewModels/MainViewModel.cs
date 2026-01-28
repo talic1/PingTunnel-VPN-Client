@@ -38,21 +38,37 @@ public class MainViewModel : INotifyPropertyChanged
     private DnsMode _dnsMode = DnsMode.TunnelDns;
     private string _dnsServersText = "1.1.1.1\n8.8.8.8";
     private string _bypassSubnetsText = "127.0.0.0/8\n192.168.0.0/16\n10.0.0.0/8\n172.16.0.0/12";
-    private bool _enableUdp = true;
     private bool _killSwitch;
     private bool _autoConnect;
     private bool _minimizeToTray = true;
     private bool _startMinimized;
     private string _encryptionMode = "none";
     private string _encryptionKey = string.Empty;
-    private int _udpTimeout = 60;
     private bool _autoRestartOnHighLatency = true;
     private int _latencyThresholdMs = 1000;
     private int _highLatencyCountThreshold = 5;
     private int _restartCooldownSeconds = 30;
     private int _maxAutoRestarts = 3;
     private string _logSearchText = string.Empty;
-    private string _logLevel = "WARN";
+    private string _logLevel = "INFO";
+    private string _appLogDirectory = string.Empty;
+    
+    // PingTunnel Settings
+    private bool _isPingTunnelSettingsExpanded = false;
+    private string _icmpListenAddress = "0.0.0.0";
+    private int _connectionTimeout = 60;
+    private bool _enableTcp = false;
+    private string _tcpBufferSize = "1MB";
+    private int _tcpMaxWindow = 20000;
+    private int _tcpResendTimeout = 400;
+    private int _tcpCompressionThreshold = 0;
+    private bool _tcpShowStatistics = false;
+    private bool _enableSocks5 = true;
+    private string _socks5GeoFilter = string.Empty;
+    private string _socks5FilterDbPath = "GeoLite2-Country.mmdb";
+    private bool _ptDisableLogFiles = false;
+    private string _ptLogLevel = "info";
+    private int _profilePort = 0;
 
     // Traffic stats properties for UI binding (stored as bytes per second)
     private double _tunnelDownBps;
@@ -324,19 +340,35 @@ public class MainViewModel : INotifyPropertyChanged
             DnsMode = settings.DnsMode;
             DnsServersText = string.Join("\n", settings.DnsServers);
             BypassSubnetsText = string.Join("\n", settings.BypassSubnets);
-            EnableUdp = settings.EnableUdp;
-            UdpTimeout = settings.UdpTimeout;
             KillSwitch = settings.KillSwitch;
             EncryptionMode = settings.EncryptionMode;
             EncryptionKey = settings.EncryptionKey;
             AutoConnect = settings.AutoConnect;
             MinimizeToTray = settings.MinimizeToTray;
             StartMinimized = settings.StartMinimized;
+            LogLevel = settings.AppLogLevel;
+            AppLogDirectory = settings.AppLogDirectory;
             AutoRestartOnHighLatency = settings.AutoRestartOnHighLatency;
             LatencyThresholdMs = settings.LatencyThresholdMs;
             HighLatencyCountThreshold = settings.HighLatencyCountThreshold;
             RestartCooldownSeconds = settings.RestartCooldownSeconds;
             MaxAutoRestarts = settings.MaxAutoRestarts;
+            
+            // PingTunnel Settings
+            IcmpListenAddress = settings.IcmpListenAddress;
+            ConnectionTimeout = settings.ConnectionTimeout;
+            EnableTcp = settings.EnableTcp;
+            TcpBufferSize = settings.TcpBufferSize;
+            TcpMaxWindow = settings.TcpMaxWindow;
+            TcpResendTimeout = settings.TcpResendTimeout;
+            TcpCompressionThreshold = settings.TcpCompressionThreshold;
+            TcpShowStatistics = settings.TcpShowStatistics;
+            EnableSocks5 = settings.EnableSocks5;
+            Socks5GeoFilter = settings.Socks5GeoFilter;
+            Socks5FilterDbPath = settings.Socks5FilterDbPath;
+            PtDisableLogFiles = settings.PtDisableLogFiles;
+            PtLogLevel = settings.PtLogLevel;
+            ProfilePort = settings.ProfilePort;
         }
         finally
         {
@@ -385,19 +417,35 @@ public class MainViewModel : INotifyPropertyChanged
                 .Select(s => s.Trim())
                 .Where(s => !string.IsNullOrEmpty(s))
                 .ToList();
-            settings.EnableUdp = EnableUdp;
-            settings.UdpTimeout = UdpTimeout;
             settings.KillSwitch = KillSwitch;
             settings.EncryptionMode = EncryptionMode;
             settings.EncryptionKey = EncryptionKey;
             settings.AutoConnect = AutoConnect;
             settings.MinimizeToTray = MinimizeToTray;
             settings.StartMinimized = StartMinimized;
+            settings.AppLogLevel = LogLevel;
+            settings.AppLogDirectory = AppLogDirectory;
             settings.AutoRestartOnHighLatency = AutoRestartOnHighLatency;
             settings.LatencyThresholdMs = LatencyThresholdMs;
             settings.HighLatencyCountThreshold = HighLatencyCountThreshold;
             settings.RestartCooldownSeconds = RestartCooldownSeconds;
             settings.MaxAutoRestarts = MaxAutoRestarts;
+            
+            // PingTunnel Settings
+            settings.IcmpListenAddress = IcmpListenAddress;
+            settings.ConnectionTimeout = ConnectionTimeout;
+            settings.EnableTcp = EnableTcp;
+            settings.TcpBufferSize = TcpBufferSize;
+            settings.TcpMaxWindow = TcpMaxWindow;
+            settings.TcpResendTimeout = TcpResendTimeout;
+            settings.TcpCompressionThreshold = TcpCompressionThreshold;
+            settings.TcpShowStatistics = TcpShowStatistics;
+            settings.EnableSocks5 = EnableSocks5;
+            settings.Socks5GeoFilter = Socks5GeoFilter;
+            settings.Socks5FilterDbPath = Socks5FilterDbPath;
+            settings.PtDisableLogFiles = PtDisableLogFiles;
+            settings.PtLogLevel = PtLogLevel;
+            settings.ProfilePort = ProfilePort;
         });
     }
 
@@ -614,23 +662,6 @@ public class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    public bool EnableUdp
-    {
-        get => _enableUdp;
-        set
-        {
-            if (_enableUdp != value)
-            {
-                _enableUdp = value;
-                OnPropertyChanged();
-                if (!_isLoadingSettings)
-                {
-                    SaveGlobalSettings();
-                }
-            }
-        }
-    }
-
     public bool KillSwitch
     {
         get => _killSwitch;
@@ -733,23 +764,6 @@ public class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    public int UdpTimeout
-    {
-        get => _udpTimeout;
-        set
-        {
-            if (_udpTimeout != value)
-            {
-                _udpTimeout = value;
-                OnPropertyChanged();
-                if (!_isLoadingSettings)
-                {
-                    SaveGlobalSettings();
-                }
-            }
-        }
-    }
-
     public bool AutoRestartOnHighLatency
     {
         get => _autoRestartOnHighLatency;
@@ -835,6 +849,261 @@ public class MainViewModel : INotifyPropertyChanged
         }
     }
 
+    #region PingTunnel Settings Properties
+
+    public bool IsPingTunnelSettingsExpanded
+    {
+        get => _isPingTunnelSettingsExpanded;
+        set
+        {
+            if (_isPingTunnelSettingsExpanded != value)
+            {
+                _isPingTunnelSettingsExpanded = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    public string IcmpListenAddress
+    {
+        get => _icmpListenAddress;
+        set
+        {
+            if (_icmpListenAddress != value)
+            {
+                _icmpListenAddress = value;
+                OnPropertyChanged();
+                if (!_isLoadingSettings)
+                {
+                    SaveGlobalSettings();
+                }
+            }
+        }
+    }
+
+    public int ConnectionTimeout
+    {
+        get => _connectionTimeout;
+        set
+        {
+            if (_connectionTimeout != value)
+            {
+                _connectionTimeout = value;
+                OnPropertyChanged();
+                if (!_isLoadingSettings)
+                {
+                    SaveGlobalSettings();
+                }
+            }
+        }
+    }
+
+    public bool EnableTcp
+    {
+        get => _enableTcp;
+        set
+        {
+            if (_enableTcp != value)
+            {
+                _enableTcp = value;
+                OnPropertyChanged();
+                if (!_isLoadingSettings)
+                {
+                    SaveGlobalSettings();
+                }
+            }
+        }
+    }
+
+    public string TcpBufferSize
+    {
+        get => _tcpBufferSize;
+        set
+        {
+            if (_tcpBufferSize != value)
+            {
+                _tcpBufferSize = value;
+                OnPropertyChanged();
+                if (!_isLoadingSettings)
+                {
+                    SaveGlobalSettings();
+                }
+            }
+        }
+    }
+
+    public int TcpMaxWindow
+    {
+        get => _tcpMaxWindow;
+        set
+        {
+            if (_tcpMaxWindow != value)
+            {
+                _tcpMaxWindow = value;
+                OnPropertyChanged();
+                if (!_isLoadingSettings)
+                {
+                    SaveGlobalSettings();
+                }
+            }
+        }
+    }
+
+    public int TcpResendTimeout
+    {
+        get => _tcpResendTimeout;
+        set
+        {
+            if (_tcpResendTimeout != value)
+            {
+                _tcpResendTimeout = value;
+                OnPropertyChanged();
+                if (!_isLoadingSettings)
+                {
+                    SaveGlobalSettings();
+                }
+            }
+        }
+    }
+
+    public int TcpCompressionThreshold
+    {
+        get => _tcpCompressionThreshold;
+        set
+        {
+            if (_tcpCompressionThreshold != value)
+            {
+                _tcpCompressionThreshold = value;
+                OnPropertyChanged();
+                if (!_isLoadingSettings)
+                {
+                    SaveGlobalSettings();
+                }
+            }
+        }
+    }
+
+    public bool TcpShowStatistics
+    {
+        get => _tcpShowStatistics;
+        set
+        {
+            if (_tcpShowStatistics != value)
+            {
+                _tcpShowStatistics = value;
+                OnPropertyChanged();
+                if (!_isLoadingSettings)
+                {
+                    SaveGlobalSettings();
+                }
+            }
+        }
+    }
+
+    public bool EnableSocks5
+    {
+        get => _enableSocks5;
+        set
+        {
+            if (_enableSocks5 != value)
+            {
+                _enableSocks5 = value;
+                OnPropertyChanged();
+                if (!_isLoadingSettings)
+                {
+                    SaveGlobalSettings();
+                }
+            }
+        }
+    }
+
+    public string Socks5GeoFilter
+    {
+        get => _socks5GeoFilter;
+        set
+        {
+            if (_socks5GeoFilter != value)
+            {
+                _socks5GeoFilter = value;
+                OnPropertyChanged();
+                if (!_isLoadingSettings)
+                {
+                    SaveGlobalSettings();
+                }
+            }
+        }
+    }
+
+    public string Socks5FilterDbPath
+    {
+        get => _socks5FilterDbPath;
+        set
+        {
+            if (_socks5FilterDbPath != value)
+            {
+                _socks5FilterDbPath = value;
+                OnPropertyChanged();
+                if (!_isLoadingSettings)
+                {
+                    SaveGlobalSettings();
+                }
+            }
+        }
+    }
+
+    public bool PtDisableLogFiles
+    {
+        get => _ptDisableLogFiles;
+        set
+        {
+            if (_ptDisableLogFiles != value)
+            {
+                _ptDisableLogFiles = value;
+                OnPropertyChanged();
+                if (!_isLoadingSettings)
+                {
+                    SaveGlobalSettings();
+                }
+            }
+        }
+    }
+
+    public string PtLogLevel
+    {
+        get => _ptLogLevel;
+        set
+        {
+            if (_ptLogLevel != value)
+            {
+                _ptLogLevel = value;
+                OnPropertyChanged();
+                if (!_isLoadingSettings)
+                {
+                    SaveGlobalSettings();
+                }
+            }
+        }
+    }
+
+    public int ProfilePort
+    {
+        get => _profilePort;
+        set
+        {
+            if (_profilePort != value)
+            {
+                _profilePort = value;
+                OnPropertyChanged();
+                if (!_isLoadingSettings)
+                {
+                    SaveGlobalSettings();
+                }
+            }
+        }
+    }
+
+    #endregion
+
     public string LogSearchText
     {
         get => _logSearchText;
@@ -862,8 +1131,45 @@ public class MainViewModel : INotifyPropertyChanged
                 OnPropertyChanged(nameof(FilteredLogs));
                 OnPropertyChanged(nameof(FilteredLogEntries));
                 UpdateSerilogLevel();
+                
+                // Auto-sync PingTunnel log level based on app log level
+                SyncPtLogLevel();
+                
+                if (!_isLoadingSettings)
+                {
+                    SaveGlobalSettings();
+                }
             }
         }
+    }
+
+    public string AppLogDirectory
+    {
+        get => _appLogDirectory;
+        set
+        {
+            if (_appLogDirectory != value)
+            {
+                _appLogDirectory = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(EffectiveLogDirectory));
+                OnPropertyChanged(nameof(CurrentLogFilePath));
+                if (!_isLoadingSettings)
+                {
+                    SaveGlobalSettings();
+                }
+            }
+        }
+    }
+
+    public string EffectiveLogDirectory => global::PingTunnelVPN.App.App.LogDirectory;
+
+    public string CurrentLogFilePath => Path.Combine(EffectiveLogDirectory, $"PingTunnelVPN-{DateTime.Now:yyyyMMdd}.log");
+
+    public void RefreshLogPaths()
+    {
+        OnPropertyChanged(nameof(EffectiveLogDirectory));
+        OnPropertyChanged(nameof(CurrentLogFilePath));
     }
 
     private static readonly Dictionary<string, int> LogLevelPriority = new()
@@ -891,6 +1197,24 @@ public class MainViewModel : INotifyPropertyChanged
         
         // Note: Serilog doesn't support runtime level changes easily without LoggingLevelSwitch
         // This would require additional setup in the logging configuration
+    }
+
+    /// <summary>
+    /// Syncs PingTunnel log level based on the unified app log level.
+    /// </summary>
+    private void SyncPtLogLevel()
+    {
+        // Map app log level to PingTunnel log level
+        _ptLogLevel = _logLevel.ToUpperInvariant() switch
+        {
+            "DEBUG" => "debug",
+            "INFO" => "info",
+            "WARN" => "warning",
+            "ERROR" => "error",
+            "FATAL" => "error", // PingTunnel doesn't have fatal, use error
+            _ => "info"
+        };
+        OnPropertyChanged(nameof(PtLogLevel));
     }
 
     private bool ShouldShowLogEntry(LogEntry entry)

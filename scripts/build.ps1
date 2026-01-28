@@ -19,7 +19,8 @@ if (Test-Path $BuildConfigPath) {
     Write-Host "  App Version: $AppVersion" -ForegroundColor Cyan
     Write-Host "  GitHub URL: $GitHubUrl" -ForegroundColor Cyan
     Write-Host ""
-} else {
+}
+else {
     Write-Host "WARNING: build.config.ps1 not found. Using defaults." -ForegroundColor Yellow
     $AppName = "PingTunnelVPN"
     $AppVersion = "1.0.0.0"
@@ -63,7 +64,8 @@ if (-not $SkipDependencies) {
     $pingtunnelExe = Join-Path (Join-Path $thirdPartyDir "pingtunnel") "pingtunnel.exe"
     if (Test-Path $pingtunnelExe) {
         Write-Host "  pingtunnel.exe already present, skipping download" -ForegroundColor Green
-    } else {
+    }
+    else {
         Write-Host "  Fetching pingtunnel..." -ForegroundColor Cyan
         & (Join-Path (Join-Path $thirdPartyDir "pingtunnel") "fetch.ps1")
         if ($LASTEXITCODE -ne 0) {
@@ -75,7 +77,8 @@ if (-not $SkipDependencies) {
     $tun2socksExe = Join-Path (Join-Path $thirdPartyDir "tun2socks") "tun2socks.exe"
     if (Test-Path $tun2socksExe) {
         Write-Host "  tun2socks.exe already present, skipping download" -ForegroundColor Green
-    } else {
+    }
+    else {
         Write-Host "  Fetching tun2socks..." -ForegroundColor Cyan
         & (Join-Path (Join-Path $thirdPartyDir "tun2socks") "fetch.ps1")
         if ($LASTEXITCODE -ne 0) {
@@ -87,7 +90,8 @@ if (-not $SkipDependencies) {
     $wintunDll = Join-Path (Join-Path $thirdPartyDir "wintun") "wintun.dll"
     if (Test-Path $wintunDll) {
         Write-Host "  wintun.dll already present, skipping download" -ForegroundColor Green
-    } else {
+    }
+    else {
         Write-Host "  Fetching wintun..." -ForegroundColor Cyan
         & (Join-Path (Join-Path $thirdPartyDir "wintun") "fetch.ps1")
         if ($LASTEXITCODE -ne 0) {
@@ -178,7 +182,8 @@ if (Test-Path $csprojPath) {
     # Add or update Version property
     if ($csprojContent -match '<Version>[^<]*</Version>') {
         $csprojContent = $csprojContent -replace '<Version>[^<]*</Version>', "<Version>$AppVersion</Version>"
-    } else {
+    }
+    else {
         # Add Version property after AssemblyName
         $csprojContent = $csprojContent -replace '(<AssemblyName>[^<]*</AssemblyName>)', "`$1`n    <Version>$AppVersion</Version>"
     }
@@ -244,9 +249,11 @@ if (Test-Path $manifestPath) {
     # Update version in assemblyIdentity tag (use 4-part version for assemblyIdentity)
     $manifestVersion = if ($AppVersion -match '^(\d+)\.(\d+)\.(\d+)$') {
         "$($matches[1]).$($matches[2]).$($matches[3]).0"
-    } elseif ($AppVersion -match '^(\d+)\.(\d+)\.(\d+)\.(\d+)$') {
+    }
+    elseif ($AppVersion -match '^(\d+)\.(\d+)\.(\d+)\.(\d+)$') {
         $AppVersion
-    } else {
+    }
+    else {
         "$AppVersion.0"
     }
     
@@ -254,7 +261,8 @@ if (Test-Path $manifestPath) {
     # Use a more specific pattern to avoid corrupting the tag
     if ($manifestContent -match '(<assemblyIdentity[^>]*\s+version=")[^"]*(")') {
         $manifestContent = $manifestContent -replace '(<assemblyIdentity[^>]*\s+version=")[^"]*(")', "`$1$manifestVersion`$2"
-    } elseif ($manifestContent -match '<assemblyIdentity') {
+    }
+    elseif ($manifestContent -match '<assemblyIdentity') {
         # If assemblyIdentity exists but pattern didn't match, try a safer approach
         $manifestContent = $manifestContent -replace '(version=")[^"]*(")', "`$1$manifestVersion`$2"
     }
@@ -381,8 +389,8 @@ try {
     # If the expected exe doesn't exist, try to find any .exe in the output directory
     if (-not (Test-Path $exePath)) {
         $foundExe = Get-ChildItem -Path $OutputDir -Filter "*.exe" -File |
-            Where-Object { $_.Name -notin @("pingtunnel.exe", "tun2socks.exe", "createdump.exe") } |
-            Select-Object -First 1
+        Where-Object { $_.Name -notin @("pingtunnel.exe", "tun2socks.exe", "createdump.exe") } |
+        Select-Object -First 1
         if ($foundExe) {
             $exeName = $foundExe.Name
             $exePath = $foundExe.FullName
@@ -415,15 +423,18 @@ try {
                 if ($LASTEXITCODE -eq 0) {
                     Write-Host "  Manifest re-embedded successfully" -ForegroundColor Green
                 }
-            } catch {
+            }
+            catch {
                 Write-Host "  WARNING: Failed to re-embed manifest: $_" -ForegroundColor Yellow
             }
-        } else {
+        }
+        else {
             Write-Host "  NOTE: mt.exe not found, manifest embedded by build system" -ForegroundColor Yellow
         }
         
         Write-Host "  Published: $OutputDir\$exeName" -ForegroundColor Green
-    } else {
+    }
+    else {
         Write-Host "  WARNING: Executable not found in publish directory" -ForegroundColor Yellow
         Write-Host "  Expected: $exePath" -ForegroundColor Yellow
         Write-Host "  Available files:" -ForegroundColor Yellow
@@ -501,11 +512,12 @@ Get-ChildItem $OutputDir -Filter "*.dll" | ForEach-Object {
 Write-Host ""
 Write-Host "To run the application:" -ForegroundColor Yellow
 $exeFiles = Get-ChildItem $OutputDir -Filter "*.exe" |
-    Where-Object { $_.Name -notin @("pingtunnel.exe", "tun2socks.exe", "createdump.exe") }
+Where-Object { $_.Name -notin @("pingtunnel.exe", "tun2socks.exe", "createdump.exe") }
 if ($exeFiles) {
     $mainExe = $exeFiles[0].Name
     Write-Host "  1. Run as Administrator: $OutputDir\$mainExe" -ForegroundColor White
-} else {
+}
+else {
     Write-Host "  1. Run as Administrator: $OutputDir\$actualExeName.exe" -ForegroundColor White
 }
 Write-Host ""

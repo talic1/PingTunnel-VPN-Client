@@ -144,6 +144,7 @@ public class ConnectionStateMachine : IDisposable
 
             // Validate configuration
             var errors = config.Validate();
+            errors.AddRange(_globalSettings.Validate());
             if (errors.Count > 0)
             {
                 throw new InvalidOperationException($"Configuration errors: {string.Join(", ", errors)}");
@@ -196,8 +197,7 @@ public class ConnectionStateMachine : IDisposable
                 config.ServerAddress,
                 config.LocalSocksPort,
                 config.ServerKey,
-                _globalSettings.EncryptionMode,
-                _globalSettings.EncryptionKey);
+                _globalSettings);
 
             // Step 8: Wait for SOCKS proxy to be ready
             Log.Information("Waiting for SOCKS proxy on port {Port}...", config.LocalSocksPort);
@@ -216,9 +216,7 @@ public class ConnectionStateMachine : IDisposable
             SetState(ConnectionState.Connecting, "Starting tun2socks...");
             _processManager.StartTun2Socks(
                 config.LocalSocksPort,
-                _globalSettings.Mtu,
-                _globalSettings.EnableUdp,
-                _globalSettings.UdpTimeout);
+                _globalSettings.Mtu);
 
             // Step 10: Wait for TUN interface to appear
             await Task.Delay(2000); // Give tun2socks time to create the adapter
@@ -410,6 +408,25 @@ public class ConnectionStateMachine : IDisposable
             catch (Exception ex)
             {
                 Log.Warning(ex, "Failed to add bypass route for {Cidr}", cidr);
+            }
+        }
+
+        // Always bypass the proxy IP (127.0.0.1) to ensure the app works even if 127.0.0.0/8 is removed from bypass subnets
+        if (_originalDefaultGateway != null)
+        {
+            try
+            {
+                _routeManager.AddRoute(
+                    "127.0.0.1",
+                    32,
+                    _originalDefaultGateway,
+                    _originalDefaultInterfaceIndex,
+                    1);
+                Log.Information("Added bypass route for proxy IP (127.0.0.1/32)");
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Failed to add bypass route for proxy IP (127.0.0.1/32)");
             }
         }
 
@@ -737,8 +754,7 @@ public class ConnectionStateMachine : IDisposable
                 config.ServerAddress,
                 config.LocalSocksPort,
                 config.ServerKey,
-                _globalSettings.EncryptionMode,
-                _globalSettings.EncryptionKey);
+                _globalSettings);
 
             // Wait for SOCKS proxy
             Log.Information("Fast restart: Waiting for SOCKS proxy...");
@@ -754,9 +770,7 @@ public class ConnectionStateMachine : IDisposable
             Log.Information("Fast restart: Starting tun2socks...");
             _processManager.StartTun2Socks(
                 config.LocalSocksPort,
-                _globalSettings.Mtu,
-                _globalSettings.EnableUdp,
-                _globalSettings.UdpTimeout);
+                _globalSettings.Mtu);
 
             // Wait for tun2socks to reconnect to the existing NIC
             await Task.Delay(1000, ct);

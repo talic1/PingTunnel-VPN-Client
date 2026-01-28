@@ -517,6 +517,7 @@ public class ConfigManager
 
     /// <summary>
     /// Exports configuration to the specified file path.
+    /// Includes both the selected server configuration and global settings.
     /// </summary>
     public void Export(string filePath)
     {
@@ -530,10 +531,17 @@ public class ConfigManager
                     throw new InvalidOperationException("No configuration selected");
                 }
 
-                var exportConfig = selected.Configuration.Clone();
-                var json = JsonSerializer.Serialize(exportConfig, JsonOptions);
+                var exportData = new ExportData
+                {
+                    Version = 2,
+                    ConfigName = selected.Name,
+                    ServerConfig = selected.Configuration.Clone(),
+                    GlobalSettings = _globalSettings.Clone()
+                };
+                
+                var json = JsonSerializer.Serialize(exportData, JsonOptions);
                 File.WriteAllText(filePath, json);
-                Log.Information("Exported configuration to {Path}", filePath);
+                Log.Information("Exported configuration and settings to {Path}", filePath);
             }
             catch (Exception ex)
             {
@@ -545,13 +553,43 @@ public class ConfigManager
 
     /// <summary>
     /// Imports configuration from the specified file path as a new config.
+    /// Supports both v2 format (with GlobalSettings) and legacy format (VpnConfiguration only).
     /// </summary>
     public ServerConfig Import(string filePath)
     {
         try
         {
             var json = File.ReadAllText(filePath);
-            var config = JsonSerializer.Deserialize<VpnConfiguration>(json, JsonOptions);
+            var fileName = Path.GetFileNameWithoutExtension(filePath);
+            
+            // Try to parse as v2 format first (with GlobalSettings)
+            VpnConfiguration? config = null;
+            GlobalSettings? importedSettings = null;
+            string? configName = null;
+            
+            try
+            {
+                var exportData = JsonSerializer.Deserialize<ExportData>(json, JsonOptions);
+                if (exportData?.Version >= 2 && exportData.ServerConfig != null)
+                {
+                    config = exportData.ServerConfig;
+                    importedSettings = exportData.GlobalSettings;
+                    configName = exportData.ConfigName;
+                    Log.Debug("Detected v2 export format with GlobalSettings");
+                }
+            }
+            catch (JsonException)
+            {
+                // Not v2 format, fall through to legacy parsing
+            }
+            
+            // Fall back to legacy format (VpnConfiguration only)
+            if (config == null)
+            {
+                config = JsonSerializer.Deserialize<VpnConfiguration>(json, JsonOptions);
+                Log.Debug("Detected legacy export format (VpnConfiguration only)");
+            }
+            
             if (config == null)
             {
                 throw new InvalidDataException("Failed to deserialize configuration file.");
@@ -565,11 +603,21 @@ public class ConfigManager
                     string.Join(", ", errors));
             }
 
+            // Apply imported GlobalSettings if present
+            if (importedSettings != null)
+            {
+                lock (_lock)
+                {
+                    _globalSettings = importedSettings;
+                    SaveGlobalSettings();
+                    Log.Information("Applied imported global settings");
+                }
+            }
+
             // Create a new ServerConfig from the imported config
-            var fileName = Path.GetFileNameWithoutExtension(filePath);
             var serverConfig = new ServerConfig
             {
-                Name = fileName,
+                Name = configName ?? fileName,
                 Configuration = config
             };
 
@@ -630,5 +678,16 @@ public class ConfigManager
     {
         public List<ServerConfig> Configs { get; set; } = new();
         public Guid? SelectedConfigId { get; set; }
+    }
+
+    /// <summary>
+    /// Export data structure containing both server configuration and global settings.
+    /// </summary>
+    private class ExportData
+    {
+        public int Version { get; set; } = 2;
+        public string? ConfigName { get; set; }
+        public VpnConfiguration? ServerConfig { get; set; }
+        public GlobalSettings? GlobalSettings { get; set; }
     }
 }
