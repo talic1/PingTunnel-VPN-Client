@@ -16,7 +16,7 @@ public static class AppInfo
     /// <summary>
     /// Gets the application version.
     /// </summary>
-    public static string Version => "1.0.0";
+    public static string Version => "1.0.1";
 
     /// <summary>
     /// Gets the GitHub repository URL.
