@@ -9,6 +9,8 @@ using System.Windows.Media.Imaging;
 using Microsoft.Win32;
 using PingTunnelVPN.App.ViewModels;
 using PingTunnelVPN.Core;
+using PingTunnelVPN.Core.Models;
+using PingTunnelVPN.Core.Services;
 using PingTunnelVPN.Platform;
 using Serilog;
 using static PingTunnelVPN.App.FormattingHelper;
@@ -34,6 +36,10 @@ public partial class MainWindow : Window
     private ConfigManager? _configManager;
     private TrayIconManager? _trayIconManager;
     private System.Windows.Threading.DispatcherTimer? _uptimeTimer;
+    private System.Windows.Threading.DispatcherTimer? _updateCheckTimer;
+    private UpdateService? _updateService;
+    private UpdateInfo? _availableUpdate;
+    private string? _downloadedInstallerPath;
     private bool _exitInProgress;
 
     public MainWindow()
@@ -88,6 +94,10 @@ public partial class MainWindow : Window
             // Setup uptime timer
             SetupUptimeTimer();
             App.WriteCrashLog("Uptime timer set up");
+
+            // Setup update checker
+            SetupUpdateChecker();
+            App.WriteCrashLog("Update checker set up");
 
             // Set app version
             AppVersionText.Text = $"Version {AppInfo.Version}";
@@ -230,6 +240,180 @@ public partial class MainWindow : Window
                 UptimeText.Text = $"Uptime: {uptime:hh\\:mm\\:ss}";
             }
         };
+    }
+
+    private void SetupUpdateChecker()
+    {
+        _updateService = new UpdateService(AppInfo.Version);
+        
+        // Clean up old downloads on startup
+        _updateService.CleanupOldDownloads();
+        
+        _updateCheckTimer = new System.Windows.Threading.DispatcherTimer
+        {
+            Interval = TimeSpan.FromMinutes(1)
+        };
+        _updateCheckTimer.Tick += UpdateCheckTimer_Tick;
+
+        // Start timer if setting enabled
+        if (_viewModel?.AutoCheckUpdates == true)
+        {
+            _updateCheckTimer.Start();
+            
+            // Initial check after 5 seconds delay
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(5000);
+                await CheckForUpdatesAsync();
+            });
+        }
+
+        // Subscribe to AutoCheckUpdates changes to start/stop timer
+        if (_viewModel != null)
+        {
+            _viewModel.PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(MainViewModel.AutoCheckUpdates))
+                {
+                    if (_viewModel.AutoCheckUpdates)
+                    {
+                        _updateCheckTimer?.Start();
+                        _ = CheckForUpdatesAsync();
+                    }
+                    else
+                    {
+                        _updateCheckTimer?.Stop();
+                    }
+                }
+            };
+        }
+    }
+
+    private async void UpdateCheckTimer_Tick(object? sender, EventArgs e)
+    {
+        if (_viewModel?.AutoCheckUpdates == true)
+        {
+            await CheckForUpdatesAsync();
+        }
+    }
+
+    private async Task CheckForUpdatesAsync()
+    {
+        if (_updateService == null) return;
+
+        try
+        {
+            var update = await _updateService.CheckForUpdateAsync();
+            if (update != null && _availableUpdate?.Version != update.Version)
+            {
+                _availableUpdate = update;
+                await Dispatcher.InvokeAsync(() => ShowUpdateBanner(update));
+                
+                // Auto-download in background
+                await DownloadUpdateInBackgroundAsync(update);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log error but don't show to user - silent background check
+            Log.Warning(ex, "Failed to check for updates");
+        }
+    }
+
+    private void ShowUpdateBanner(UpdateInfo update)
+    {
+        UpdateVersionText.Text = $"Update available: v{update.Version}";
+        UpdateStatusText.Text = "Downloading in background...";
+        UpdateBanner.Visibility = Visibility.Visible;
+        InstallUpdateButton.IsEnabled = false;
+    }
+
+    private async Task DownloadUpdateInBackgroundAsync(UpdateInfo update)
+    {
+        if (_updateService == null) return;
+
+        try
+        {
+            var progress = new Progress<double>(p =>
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    UpdateStatusText.Text = $"Downloading: {p:P0}";
+                });
+            });
+            
+            _downloadedInstallerPath = await _updateService.DownloadUpdateAsync(update, progress, CancellationToken.None);
+            
+            await Dispatcher.InvokeAsync(() =>
+            {
+                UpdateStatusText.Text = "Ready to install - click to update";
+                InstallUpdateButton.IsEnabled = true;
+            });
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Failed to download update");
+            await Dispatcher.InvokeAsync(() =>
+            {
+                UpdateStatusText.Text = "Download failed - will retry";
+                InstallUpdateButton.IsEnabled = false;
+            });
+        }
+    }
+
+    private void InstallUpdate_Click(object sender, RoutedEventArgs e)
+    {
+        if (_updateService == null || string.IsNullOrEmpty(_downloadedInstallerPath))
+        {
+            MessageBox.Show(
+                "Update file not ready. Please wait for the download to complete.",
+                "Update Not Ready",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            return;
+        }
+
+        var result = MessageBox.Show(
+            $"Ready to install version {_availableUpdate?.Version}.\n\n" +
+            "The application will close and the installer will start.\n" +
+            "Continue?",
+            "Install Update",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (result == MessageBoxResult.Yes)
+        {
+            try
+            {
+                // Save config before exit
+                SaveConfigFromUI();
+                
+                // Disconnect if connected
+                if (_stateMachine?.CurrentState == ConnectionState.Connected)
+                {
+                    _ = _stateMachine.DisconnectAsync().ContinueWith(_ =>
+                    {
+                        Dispatcher.Invoke(() =>
+                        {
+                            _updateService.LaunchInstallerAndExit(_downloadedInstallerPath);
+                        });
+                    });
+                }
+                else
+                {
+                    _updateService.LaunchInstallerAndExit(_downloadedInstallerPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to launch installer");
+                MessageBox.Show(
+                    $"Failed to launch installer: {ex.Message}",
+                    "Update Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
     }
 
     private void OnStateChanged(object? sender, ConnectionStateChangedEventArgs e)

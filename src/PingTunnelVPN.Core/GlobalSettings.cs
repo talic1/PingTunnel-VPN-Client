@@ -64,6 +64,11 @@ public class GlobalSettings
     public bool StartMinimized { get; set; } = false;
 
     /// <summary>
+    /// Automatically check for updates on startup and periodically.
+    /// </summary>
+    public bool AutoCheckUpdates { get; set; } = true;
+
+    /// <summary>
     /// Application log level (DEBUG, INFO, WARN, ERROR, FATAL).
     /// This controls both the UI log filter and PingTunnel's log level.
     /// </summary>
@@ -212,6 +217,7 @@ public class GlobalSettings
             AutoConnect = AutoConnect,
             MinimizeToTray = MinimizeToTray,
             StartMinimized = StartMinimized,
+            AutoCheckUpdates = AutoCheckUpdates,
             AppLogLevel = AppLogLevel,
             AppLogDirectory = AppLogDirectory,
             AutoRestartOnHighLatency = AutoRestartOnHighLatency,

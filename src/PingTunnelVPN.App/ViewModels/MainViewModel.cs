@@ -42,6 +42,7 @@ public class MainViewModel : INotifyPropertyChanged
     private bool _autoConnect;
     private bool _minimizeToTray = true;
     private bool _startMinimized;
+    private bool _autoCheckUpdates = true;
     private string _encryptionMode = "none";
     private string _encryptionKey = string.Empty;
     private bool _autoRestartOnHighLatency = true;
@@ -346,6 +347,7 @@ public class MainViewModel : INotifyPropertyChanged
             AutoConnect = settings.AutoConnect;
             MinimizeToTray = settings.MinimizeToTray;
             StartMinimized = settings.StartMinimized;
+            AutoCheckUpdates = settings.AutoCheckUpdates;
             LogLevel = settings.AppLogLevel;
             AppLogDirectory = settings.AppLogDirectory;
             AutoRestartOnHighLatency = settings.AutoRestartOnHighLatency;
@@ -423,6 +425,7 @@ public class MainViewModel : INotifyPropertyChanged
             settings.AutoConnect = AutoConnect;
             settings.MinimizeToTray = MinimizeToTray;
             settings.StartMinimized = StartMinimized;
+            settings.AutoCheckUpdates = AutoCheckUpdates;
             settings.AppLogLevel = LogLevel;
             settings.AppLogDirectory = AppLogDirectory;
             settings.AutoRestartOnHighLatency = AutoRestartOnHighLatency;
@@ -721,6 +724,23 @@ public class MainViewModel : INotifyPropertyChanged
             if (_startMinimized != value)
             {
                 _startMinimized = value;
+                OnPropertyChanged();
+                if (!_isLoadingSettings)
+                {
+                    SaveGlobalSettings();
+                }
+            }
+        }
+    }
+
+    public bool AutoCheckUpdates
+    {
+        get => _autoCheckUpdates;
+        set
+        {
+            if (_autoCheckUpdates != value)
+            {
+                _autoCheckUpdates = value;
                 OnPropertyChanged();
                 if (!_isLoadingSettings)
                 {

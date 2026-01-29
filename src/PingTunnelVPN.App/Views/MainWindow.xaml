@@ -107,6 +107,7 @@
                     <RowDefinition Height="Auto"/>      <!-- Status Header -->
                     <RowDefinition Height="Auto"/>      <!-- Traffic Stats -->
                     <RowDefinition Height="Auto"/>      <!-- Tab Bar -->
+                    <RowDefinition Height="Auto"/>      <!-- Update Banner -->
                     <RowDefinition Height="*"/>         <!-- Tab Content -->
                 </Grid.RowDefinitions>
 
@@ -358,9 +359,47 @@
         </Border>
 
         <!-- ============================================== -->
+        <!-- Update Available Banner (Global - All Tabs)    -->
+        <!-- ============================================== -->
+        <Border x:Name="UpdateBanner"
+                Grid.Row="3"
+                Background="{DynamicResource Brush.Primary}"
+                CornerRadius="{DynamicResource Radius.M}"
+                Padding="12,10"
+                Margin="0,8,0,0"
+                Visibility="Collapsed">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock x:Name="UpdateVersionText"
+                               Text="Update available"
+                               Foreground="White"
+                               FontWeight="SemiBold"
+                               FontSize="13"/>
+                    <TextBlock x:Name="UpdateStatusText"
+                               Text="Checking..."
+                               Foreground="White"
+                               Opacity="0.85"
+                               FontSize="11"
+                               Margin="0,2,0,0"/>
+                </StackPanel>
+                <Button x:Name="InstallUpdateButton"
+                        Grid.Column="1"
+                        Content="Install Update"
+                        Click="InstallUpdate_Click"
+                        Style="{DynamicResource Button.Secondary}"
+                        VerticalAlignment="Center"
+                        Margin="12,0,0,0"/>
+            </Grid>
+        </Border>
+
+        <!-- ============================================== -->
         <!-- Tab Content                                    -->
         <!-- ============================================== -->
-        <Grid Grid.Row="3">
+        <Grid Grid.Row="4">
             
             <!-- Connections Tab -->
             <Grid x:Name="ConnectionsTabContent" Visibility="Visible">
@@ -1403,6 +1442,30 @@
                                               Grid.Column="1"
                                               Style="{DynamicResource ToggleSwitch}"
                                               IsChecked="{Binding StartMinimized, Mode=TwoWay}"
+                                              VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Auto Check Updates -->
+                        <Border Background="{DynamicResource Brush.Background.Surface}"
+                                CornerRadius="{DynamicResource Radius.M}"
+                                Padding="16"
+                                Margin="0,0,0,24">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Auto Check Updates"
+                                               Style="{DynamicResource Text.Body}"/>
+                                    <TextBlock Text="Check for updates every minute in background"
+                                               Style="{DynamicResource Text.Caption}"/>
+                                </StackPanel>
+                                <ToggleButton x:Name="AutoCheckUpdatesToggle"
+                                              Grid.Column="1"
+                                              Style="{DynamicResource ToggleSwitch}"
+                                              IsChecked="{Binding AutoCheckUpdates, Mode=TwoWay}"
                                               VerticalAlignment="Center"/>
                             </Grid>
                         </Border>
